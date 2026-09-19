@@ -10,6 +10,9 @@ import {
   Info,
   CheckCircle2,
   AlertTriangle,
+  Home,
+  LayoutDashboard,
+  ArrowRight,
 } from 'lucide-react';
 import { CandidateSite } from '../types';
 
@@ -18,6 +21,7 @@ interface NavbarProps {
   onOpenNewSiteModal: () => void;
   onSelectSite?: (site: CandidateSite) => void;
   onSearchSelect?: (siteId: string) => void;
+  onNavigateTab?: (tab: string) => void;
   candidateSites?: CandidateSite[];
 }
 
@@ -26,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNewSiteModal,
   onSelectSite,
   onSearchSelect,
+  onNavigateTab,
   candidateSites = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Format tab label nicely
   const tabTitles: Record<string, { title: string; subtitle: string }> = {
+    home: { title: 'Welcome & System Guide', subtitle: 'Start' },
     overview: { title: 'Site Intelligence Dashboard', subtitle: 'Overview' },
     'site-analysis': { title: 'Site Readiness Analyzer', subtitle: 'Site Analysis' },
     'opportunity-map': { title: 'Opportunity Discovery Map', subtitle: 'Opportunity Map' },
@@ -68,7 +74,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Breadcrumbs & Title */}
       <div className="flex flex-col min-w-0">
         <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-          <span className="hover:text-slate-600 transition-colors">GeoReady</span>
+          <button
+            onClick={() => onNavigateTab?.('home')}
+            className="hover:text-indigo-600 font-semibold transition-colors cursor-pointer flex items-center gap-1"
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span>GeoReady</span>
+          </button>
           <span>/</span>
           <span className="text-slate-600 font-medium">{currentTabInfo.subtitle}</span>
           <span>/</span>
@@ -237,13 +249,34 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
+        {/* Quick Home / Workspace Toggle */}
+        {activeTab !== 'home' ? (
+          <button
+            onClick={() => onNavigateTab?.('home')}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
+            title="Return to Home & Operating Guide"
+          >
+            <Home className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Home & Guide</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => onNavigateTab?.('overview')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+          >
+            <span>Open Workspace</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        )}
+
         {/* Primary Action Button: + New Site Analysis */}
         <button
           onClick={onOpenNewSiteModal}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold shadow-sm shadow-indigo-600/20 transition-all hover:shadow-md hover:scale-[1.01]"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-semibold shadow-xs transition-all hover:scale-[1.01]"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>New Site Analysis</span>
+          <span className="hidden md:inline">New Site Analysis</span>
+          <span className="md:hidden">New</span>
         </button>
 
         {/* User Profile Avatar */}

@@ -14,6 +14,7 @@ import { NewSiteModal } from './components/NewSiteModal';
 import { AiAssistantModal } from './components/AiAssistantModal';
 
 // Pages
+import { HomePage } from './pages/HomePage';
 import { OverviewPage } from './pages/OverviewPage';
 import { SiteAnalysisPage } from './pages/SiteAnalysisPage';
 import { AccessibilityPage } from './pages/AccessibilityPage';
@@ -29,7 +30,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { analyzeSite } from './services/gisService';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [activeTab, setActiveTab] = useState<string>('home');
   const [sites, setSites] = useState<CandidateSite[]>(MOCK_CANDIDATE_SITES);
   const [selectedSite, setSelectedSite] = useState<CandidateSite>(MOCK_CANDIDATE_SITES[0]);
   const [layers, setLayers] = useState<MapLayerConfig[]>(DEFAULT_MAP_LAYERS);
@@ -127,6 +128,7 @@ export default function App() {
           activeTab={activeTab}
           candidateSites={sites}
           onSelectSite={handleSelectSite}
+          onNavigateTab={setActiveTab}
           onSearchSelect={(siteId) => {
             const found = sites.find((s) => s.id === siteId);
             if (found) {
@@ -139,6 +141,14 @@ export default function App() {
         {/* Dynamic Page Workspace (Scrollable) */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar">
           <div className="max-w-7xl mx-auto space-y-6">
+            {activeTab === 'home' && (
+              <HomePage
+                onNavigateTab={setActiveTab}
+                onOpenNewSiteModal={() => setIsNewSiteModalOpen(true)}
+                onOpenAiModal={() => setIsAiModalOpen(true)}
+              />
+            )}
+
             {activeTab === 'overview' && (
               <OverviewPage
                 sites={sites}

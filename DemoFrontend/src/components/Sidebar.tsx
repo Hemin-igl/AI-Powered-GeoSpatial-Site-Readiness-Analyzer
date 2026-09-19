@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Home,
   LayoutDashboard,
   MapPin,
   Compass,
@@ -18,6 +19,7 @@ import {
   ChevronDown,
   Building2,
   Sliders,
+  HelpCircle,
 } from 'lucide-react';
 
 interface NavItem {
@@ -61,11 +63,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navSections: NavSection[] = [
     {
-      title: 'MAIN',
+      title: 'GET STARTED',
       items: [
-        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-        { id: 'site-analysis', label: 'Site Analysis', icon: MapPin },
-        { id: 'opportunity-map', label: 'Opportunity Map', icon: Compass, badge: opportunityCount },
+        { id: 'home', label: 'Home & Guide', icon: Home },
+      ],
+    },
+    {
+      title: 'CORE WORKSPACE',
+      items: [
+        { id: 'overview', label: 'Dashboard & Map', icon: LayoutDashboard },
+        { id: 'site-analysis', label: 'Site Readiness', icon: MapPin },
+        { id: 'opportunity-map', label: 'Opportunity Zones', icon: Compass, badge: opportunityCount },
         { id: 'compare-sites', label: 'Compare Sites', icon: GitCompare },
       ],
     },
@@ -109,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Brand Header */}
       <div className="flex items-center justify-between h-18 px-5 border-b border-slate-100/80">
         <div
-          onClick={() => handleTabClick('overview')}
+          onClick={() => handleTabClick('home')}
           className="flex items-center gap-3 cursor-pointer select-none group"
         >
           {/* Logo Pin Icon */}
@@ -238,6 +246,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ))}
       </div>
+
+      {/* Quick Help Card when not collapsed */}
+      {!collapsed && (
+        <div className="mx-3 mb-2 p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100/80">
+          <div className="flex items-center gap-2 text-indigo-700 font-bold text-[11px]">
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Need Guidance?</span>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1 leading-snug">
+            Check step-by-step operating instructions on the home page.
+          </p>
+          <button
+            onClick={() => handleTabClick('home')}
+            className="mt-2 text-[10px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+          >
+            <span>Open User Guide</span>
+            <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {/* User Profile Card at Bottom */}
       <div className="p-3 border-t border-slate-100/90 bg-slate-50/50">
