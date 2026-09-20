@@ -10,6 +10,15 @@ export interface Coordinates {
   lng: number;
 }
 
+export interface City {
+  id: string;
+  name: string;
+  state: string;
+  country: string;
+  lat: number;
+  lng: number;
+}
+
 export interface CandidateSite {
   id: string;
   name: string;
@@ -128,4 +137,30 @@ export interface ChatMessage {
     label: string;
     targetPage: string;
   };
+}
+
+export interface DemographicData {
+  totalMetropolitanPopulation: number;
+  averageDensityPerSqKm: number;
+  medianMonthlyIncomeINR: number;
+  activeHouseholds: number;
+  ageDistribution: { range: string; percentage: number; label: string }[];
+  incomeBrackets: { tier: string; share: number; color: string }[];
+}
+
+export interface RoadData {
+  name: string;
+  coords: [number, number][];
+  type: string;
+}
+
+export interface CityData {
+  city: City;
+  candidateSites: CandidateSite[];
+  competitors: CompetitorPoint[];
+  h3Cells: H3CellData[];
+  demographics: DemographicData;
+  opportunityZones: OpportunityZone[];
+  riverCoordinates: [number, number][];
+  roads: RoadData[];
 }

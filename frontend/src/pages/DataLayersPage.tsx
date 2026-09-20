@@ -13,9 +13,10 @@ import {
   Plus,
   RefreshCw,
 } from 'lucide-react';
-import { MapLayerConfig } from '../types';
+import { City, MapLayerConfig } from '../types';
 
 interface DataLayersPageProps {
+  activeCity: City;
   layers: MapLayerConfig[];
   onToggleLayer: (layerId: string) => void;
   onChangeOpacity: (layerId: string, opacity: number) => void;
@@ -23,13 +24,14 @@ interface DataLayersPageProps {
 }
 
 export const DataLayersPage: React.FC<DataLayersPageProps> = ({
+  activeCity,
   layers,
   onToggleLayer,
   onChangeOpacity,
   onAddLayer,
 }) => {
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [datasetName, setDatasetName] = useState('Surat Metro Phase 2 Corridors');
+  const [datasetName, setDatasetName] = useState(`${activeCity.name} Phase 2 Corridors`);
   const [fileFormat, setFileFormat] = useState('GeoJSON');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -49,7 +51,7 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
         featureCount: 342,
         lastUpdated: 'Just now',
         color: '#f59e0b',
-        description: 'User uploaded spatial vector geometry for Surat transit arteries.',
+        description: `User uploaded spatial vector geometry for ${activeCity.name} transit arteries.`,
       };
       onAddLayer(newLayer);
       setTimeout(() => {
@@ -62,17 +64,17 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Banner */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               Spatial Data Layers & Catalog
             </h1>
-            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60">
               {layers.filter((l) => l.active).length} Active Layers
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Manage vector datasets, raster overlays, opacity blending, and ingest external GeoJSON or Shapefiles.
           </p>
         </div>
@@ -91,7 +93,7 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
         {layers.map((layer) => (
           <div
             key={layer.id}
-            className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between space-y-4"
+            className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4"
           >
             <div>
               <div className="flex items-start justify-between">
@@ -103,8 +105,8 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
                     <Layers className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">{layer.name}</h3>
-                    <span className="text-[11px] text-slate-400 capitalize">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{layer.name}</h3>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 capitalize">
                       {layer.category} Layer • {layer.featureCount.toLocaleString()} features
                     </span>
                   </div>
@@ -115,8 +117,8 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
                   onClick={() => onToggleLayer(layer.id)}
                   className={`p-2 rounded-xl transition-colors cursor-pointer ${
                     layer.active
-                      ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-                      : 'bg-slate-100 text-slate-400 hover:text-slate-600'
+                      ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/80'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                   title={layer.active ? 'Hide layer' : 'Show layer'}
                 >
@@ -124,17 +126,17 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
                 </button>
               </div>
 
-              <p className="text-xs text-slate-500 mt-3 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
                 {layer.description}
               </p>
             </div>
 
-            <div className="space-y-3 pt-3 border-t border-slate-50">
+            <div className="space-y-3 pt-3 border-t border-slate-50 dark:border-slate-800">
               {/* Opacity Slider */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-600">Layer Opacity</span>
-                  <span className="font-mono text-slate-700 font-bold">
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">Layer Opacity</span>
+                  <span className="font-mono text-slate-700 dark:text-slate-200 font-bold">
                     {Math.round(layer.opacity * 100)}%
                   </span>
                 </div>
@@ -146,17 +148,17 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
                   value={layer.opacity}
                   disabled={!layer.active}
                   onChange={(e) => onChangeOpacity(layer.id, parseFloat(e.target.value))}
-                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 disabled:opacity-40"
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600 disabled:opacity-40"
                 />
               </div>
 
               {/* Footer Meta */}
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-1">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   Updated: {layer.lastUpdated}
                 </span>
-                <span className="font-mono bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 text-slate-600">
+                <span className="font-mono bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300">
                   EPSG:4326
                 </span>
               </div>
@@ -168,15 +170,15 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
       {/* Simulated Upload Dataset Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <Upload className="w-4 h-4 text-indigo-600" />
-                <h3 className="text-base font-bold text-slate-900">Upload Spatial Dataset</h3>
+                <Upload className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Upload Spatial Dataset</h3>
               </div>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-semibold"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xs font-semibold"
               >
                 Close
               </button>
@@ -185,58 +187,58 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
             {uploadSuccess ? (
               <div className="p-6 text-center space-y-2">
                 <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto animate-bounce" />
-                <h4 className="text-sm font-bold text-slate-900">Dataset Ingested Successfully!</h4>
-                <p className="text-xs text-slate-500">
-                  Imported 342 features into Surat spatial runtime. Layer is now available on map.
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Dataset Ingested Successfully!</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Imported 342 features into {activeCity.name} spatial runtime. Layer is now available on map.
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSimulateUpload} className="space-y-4 text-xs">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Dataset Title / Layer Identifier
                   </label>
                   <input
                     type="text"
                     value={datasetName}
                     onChange={(e) => setDatasetName(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 outline-hidden"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 outline-hidden"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Spatial Vector Format
                   </label>
                   <select
                     value={fileFormat}
                     onChange={(e) => setFileFormat(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:bg-white focus:border-indigo-500 outline-hidden"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 outline-hidden"
                   >
-                    <option value="GeoJSON">GeoJSON (.geojson, .json)</option>
-                    <option value="Shapefile">ESRI Shapefile Archive (.zip)</option>
-                    <option value="KML">Keyhole Markup Language (.kml, .kmz)</option>
-                    <option value="CSV">Geocoded Points CSV (Lat, Long)</option>
+                    <option value="GeoJSON" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">GeoJSON (.geojson, .json)</option>
+                    <option value="Shapefile" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">ESRI Shapefile Archive (.zip)</option>
+                    <option value="KML" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Keyhole Markup Language (.kml, .kmz)</option>
+                    <option value="CSV" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Geocoded Points CSV (Lat, Long)</option>
                   </select>
                 </div>
 
                 {/* Drag and drop mock dropzone */}
-                <div className="p-6 border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl bg-slate-50 text-center cursor-pointer transition-colors">
+                <div className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-center cursor-pointer transition-colors">
                   <FileCode className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
-                  <span className="font-semibold text-slate-700 block">
+                  <span className="font-semibold text-slate-700 dark:text-slate-200 block">
                     Click to browse or drop spatial files here
                   </span>
-                  <span className="text-[11px] text-slate-400 block mt-1">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block mt-1">
                     Max file size 50 MB • Coordinate system WGS84 auto-projected
                   </span>
                 </div>
 
-                <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
+                <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setShowUploadModal(false)}
-                    className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50"
+                    className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     Cancel
                   </button>

@@ -1,11 +1,9 @@
 import {
-  CANDIDATE_SITES,
-  COMPETITOR_POINTS,
+  CITY_DATA,
   DEFAULT_MAP_LAYERS,
-  H3_HEXAGONS,
   ISOCHRONE_DATA,
   PRESET_WEIGHTS,
-} from '../data/suratData';
+} from '../data/mockData';
 import {
   BusinessType,
   CandidateSite,
@@ -14,6 +12,11 @@ import {
   MapLayerConfig,
   ScoringWeights,
 } from '../types';
+
+const suratData = CITY_DATA.surat;
+const CANDIDATE_SITES = suratData.candidateSites;
+const COMPETITOR_POINTS = suratData.competitors;
+const H3_HEXAGONS = suratData.h3Cells;
 
 /**
  * Calculates a normalized readiness score given raw factor scores and weights.

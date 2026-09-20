@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import { Sparkles, Bot } from 'lucide-react';
 import { BusinessType, CandidateSite, MapLayerConfig } from './types';
-import {
-  MOCK_CANDIDATE_SITES,
-  MOCK_COMPETITORS,
-  SURAT_H3_GRID,
-  DEFAULT_MAP_LAYERS,
-} from './data/suratData';
+import { CITIES, CITY_DATA, DEFAULT_MAP_LAYERS } from './data/mockData';
+import { City } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { SiteDrawer } from './components/SiteDrawer';
@@ -31,13 +27,27 @@ import { analyzeSite } from './services/gisService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
-  const [sites, setSites] = useState<CandidateSite[]>(MOCK_CANDIDATE_SITES);
-  const [selectedSite, setSelectedSite] = useState<CandidateSite>(MOCK_CANDIDATE_SITES[0]);
+  const [activeCity, setActiveCity] = useState<City>(CITIES[0]);
+  const activeCityData = CITY_DATA[activeCity.id];
+
+  const [sites, setSites] = useState<CandidateSite[]>(activeCityData.candidateSites);
+  const [selectedSite, setSelectedSite] = useState<CandidateSite>(activeCityData.candidateSites[0]);
   const [layers, setLayers] = useState<MapLayerConfig[]>(DEFAULT_MAP_LAYERS);
   const [comparisonSiteIds, setComparisonSiteIds] = useState<string[]>([
-    MOCK_CANDIDATE_SITES[0].id,
-    MOCK_CANDIDATE_SITES[1].id,
+    activeCityData.candidateSites[0].id,
+    activeCityData.candidateSites[1]?.id || '',
   ]);
+
+  // Handle city switch gracefully
+  const handleCityChange = (cityId: string) => {
+    const newCity = CITIES.find(c => c.id === cityId);
+    if (!newCity) return;
+    setActiveCity(newCity);
+    const newData = CITY_DATA[newCity.id];
+    setSites(newData.candidateSites);
+    setSelectedSite(newData.candidateSites[0]);
+    setActiveTab('overview');
+  };
 
   // Modals & Panels
   const [isSiteDrawerOpen, setIsSiteDrawerOpen] = useState(false);
@@ -112,9 +122,10 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] text-slate-900 font-sans antialiased">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased transition-colors">
       {/* 1. PERSISTENT SIDEBAR NAVIGATION */}
       <Sidebar
+        activeCity={activeCity}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         openAiModal={() => setIsAiModalOpen(true)}
@@ -124,6 +135,7 @@ export default function App() {
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Navbar */}
         <Navbar
+          activeCity={activeCity}
           onOpenNewSiteModal={() => setIsNewSiteModalOpen(true)}
           activeTab={activeTab}
           candidateSites={sites}
@@ -143,6 +155,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto space-y-6">
             {activeTab === 'home' && (
               <HomePage
+                activeCity={activeCity}
                 onNavigateTab={setActiveTab}
                 onOpenNewSiteModal={() => setIsNewSiteModalOpen(true)}
                 onOpenAiModal={() => setIsAiModalOpen(true)}
@@ -151,11 +164,14 @@ export default function App() {
 
             {activeTab === 'overview' && (
               <OverviewPage
+                activeCity={activeCity}
+                availableCities={CITIES}
+                onCityChange={handleCityChange}
                 sites={sites}
                 selectedSite={selectedSite}
                 onSelectSite={handleSelectSite}
-                competitors={MOCK_COMPETITORS}
-                h3Cells={SURAT_H3_GRID}
+                competitors={activeCityData.competitors}
+                h3Cells={activeCityData.h3Cells}
                 layers={layers}
                 onToggleLayer={handleToggleLayer}
                 onChangeOpacity={handleChangeOpacity}
@@ -166,6 +182,7 @@ export default function App() {
 
             {activeTab === 'site-analysis' && (
               <SiteAnalysisPage
+                activeCity={activeCity}
                 currentSite={selectedSite}
                 onUpdateSite={(updated) => {
                   setSelectedSite(updated);
@@ -181,6 +198,8 @@ export default function App() {
 
             {activeTab === 'opportunity-map' && (
               <OpportunityMapPage
+                activeCity={activeCity}
+                opportunityZones={activeCityData.opportunityZones}
                 sites={sites}
                 selectedSite={selectedSite}
                 onSelectSite={handleSelectSite}
@@ -190,6 +209,7 @@ export default function App() {
 
             {activeTab === 'accessibility' && (
               <AccessibilityPage
+                activeCity={activeCity}
                 currentSite={selectedSite}
                 sites={sites}
                 onSelectSite={handleSelectSite}
@@ -198,14 +218,17 @@ export default function App() {
 
             {activeTab === 'competition' && (
               <CompetitionPage
+                activeCity={activeCity}
                 currentSite={selectedSite}
-                competitors={MOCK_COMPETITORS}
+                competitors={activeCityData.competitors}
                 onSelectSite={handleSelectSite}
               />
             )}
 
             {activeTab === 'demographics' && (
               <DemographicsPage
+                activeCity={activeCity}
+                demographics={activeCityData.demographics}
                 currentSite={selectedSite}
                 onSelectSite={handleSelectSite}
               />
@@ -213,16 +236,18 @@ export default function App() {
 
             {activeTab === 'hotspots' && (
               <HotspotsPage
+                activeCity={activeCity}
                 currentSite={selectedSite}
                 sites={sites}
-                competitors={MOCK_COMPETITORS}
-                h3Cells={SURAT_H3_GRID}
+                competitors={activeCityData.competitors}
+                h3Cells={activeCityData.h3Cells}
                 onSelectSite={handleSelectSite}
               />
             )}
 
             {activeTab === 'compare-sites' && (
               <CompareSitesPage
+                activeCity={activeCity}
                 sites={sites}
                 comparisonSiteIds={comparisonSiteIds}
                 onToggleSiteComparison={handleToggleSiteComparison}
@@ -233,6 +258,7 @@ export default function App() {
 
             {activeTab === 'data-layers' && (
               <DataLayersPage
+                activeCity={activeCity}
                 layers={layers}
                 onToggleLayer={handleToggleLayer}
                 onChangeOpacity={handleChangeOpacity}
@@ -242,6 +268,7 @@ export default function App() {
 
             {activeTab === 'reports' && (
               <ReportsPage
+                activeCity={activeCity}
                 currentSite={selectedSite}
                 sites={sites}
                 onSelectSite={handleSelectSite}
@@ -250,13 +277,14 @@ export default function App() {
 
             {activeTab === 'risk-analysis' && (
               <RiskAnalysisPage
+                activeCity={activeCity}
                 currentSite={selectedSite}
                 sites={sites}
                 onSelectSite={handleSelectSite}
               />
             )}
 
-            {activeTab === 'settings' && <SettingsPage />}
+            {activeTab === 'settings' && <SettingsPage activeCity={activeCity} />}
           </div>
         </main>
       </div>
@@ -264,6 +292,7 @@ export default function App() {
       {/* 3. SITE DETAIL DRAWER (Slides in from right when site clicked) */}
       {isSiteDrawerOpen && (
         <SiteDrawer
+          activeCity={activeCity}
           site={selectedSite}
           onClose={() => setIsSiteDrawerOpen(false)}
           onGoToAnalysis={(site) => {
@@ -278,6 +307,7 @@ export default function App() {
 
       {/* 4. NEW SITE MODAL */}
       <NewSiteModal
+        activeCity={activeCity}
         isOpen={isNewSiteModalOpen}
         onClose={() => setIsNewSiteModalOpen(false)}
         onSubmit={handleAnalyzeNewSite}
@@ -285,6 +315,7 @@ export default function App() {
 
       {/* 5. FLOATING AI ASSISTANT CHAT PANEL */}
       <AiAssistantModal
+        activeCity={activeCity}
         isOpen={isAiModalOpen}
         onClose={() => setIsAiModalOpen(false)}
         activeSite={selectedSite}

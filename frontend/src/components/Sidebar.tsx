@@ -21,6 +21,7 @@ import {
   Sliders,
   HelpCircle,
 } from 'lucide-react';
+import { City } from '../types';
 
 interface NavItem {
   id: string;
@@ -38,6 +39,7 @@ interface NavSection {
 }
 
 interface SidebarProps {
+  activeCity: City;
   activeTab: string;
   setActiveTab?: (tab: string) => void;
   onTabChange?: (tab: string) => void;
@@ -48,6 +50,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
+  activeCity,
   activeTab,
   setActiveTab,
   onTabChange,
@@ -110,12 +113,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`relative flex flex-col h-screen bg-white border-r border-slate-100 transition-all duration-300 z-30 shrink-0 ${
+      className={`relative flex flex-col h-screen bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 transition-colors duration-300 z-30 shrink-0 ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
       {/* Brand Header */}
-      <div className="flex items-center justify-between h-18 px-5 border-b border-slate-100/80">
+      <div className="flex items-center justify-between h-18 px-5 border-b border-slate-100/80 dark:border-slate-800/80">
         <div
           onClick={() => handleTabClick('home')}
           className="flex items-center gap-3 cursor-pointer select-none group"
@@ -138,13 +141,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-bold text-lg text-slate-900 tracking-tight flex items-center gap-1.5">
+              <span className="font-bold text-lg text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-1.5">
                 GeoReady
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60">
                   GIS v2.4
                 </span>
               </span>
-              <span className="text-[11px] text-slate-400 font-medium tracking-wide">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium tracking-wide">
                 AI-powered site intelligence
               </span>
             </div>
@@ -162,20 +165,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Selected Workspace badge */}
       {!collapsed && (
-        <div className="mx-4 my-3 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">
+        <div className="mx-4 my-3 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-6 h-6 rounded-lg bg-indigo-100/70 text-indigo-700 flex items-center justify-center text-xs font-semibold">
+            <div className="w-6 h-6 rounded-lg bg-indigo-100/70 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-semibold">
               <Building2 className="w-3.5 h-3.5" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-semibold text-slate-800 truncate">Surat Municipal Area</span>
-              <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{activeCity.name} Municipal Area</span>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 Spatial Model Live
               </span>
             </div>
           </div>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
         </div>
       )}
 
@@ -204,8 +207,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group relative ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-700 font-semibold shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
                   title={collapsed ? item.label : undefined}
                 >
@@ -249,17 +252,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Quick Help Card when not collapsed */}
       {!collapsed && (
-        <div className="mx-3 mb-2 p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100/80">
-          <div className="flex items-center gap-2 text-indigo-700 font-bold text-[11px]">
+        <div className="mx-3 mb-2 p-3 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100/80 dark:border-indigo-900/50">
+          <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold text-[11px]">
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Need Guidance?</span>
           </div>
-          <p className="text-[10px] text-slate-500 mt-1 leading-snug">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
             Check step-by-step operating instructions on the home page.
           </p>
           <button
             onClick={() => handleTabClick('home')}
-            className="mt-2 text-[10px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+            className="mt-2 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
           >
             <span>Open User Guide</span>
             <ChevronRight className="w-3 h-3" />
@@ -268,24 +271,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* User Profile Card at Bottom */}
-      <div className="p-3 border-t border-slate-100/90 bg-slate-50/50">
+      <div className="p-3 border-t border-slate-100/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
         <div
           className={`flex items-center ${
             collapsed ? 'justify-center' : 'gap-3 px-2 py-1.5'
-          } rounded-xl hover:bg-white transition-colors cursor-pointer`}
+          } rounded-xl hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer`}
           onClick={() => handleTabClick('settings')}
         >
           <div className="relative shrink-0">
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-semibold flex items-center justify-center text-xs shadow-xs">
               RP
             </div>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"></span>
           </div>
 
           {!collapsed && (
             <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-xs font-semibold text-slate-800 truncate">Rahul Patel</span>
-              <span className="text-[11px] text-slate-400 truncate">GIS Analyst</span>
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">Rahul Patel</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">GIS Analyst</span>
             </div>
           )}
         </div>

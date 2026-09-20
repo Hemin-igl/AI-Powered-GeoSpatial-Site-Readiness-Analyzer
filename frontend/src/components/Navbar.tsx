@@ -13,10 +13,14 @@ import {
   Home,
   LayoutDashboard,
   ArrowRight,
+  Sun,
+  Moon,
 } from 'lucide-react';
-import { CandidateSite } from '../types';
+import { CandidateSite, City } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 interface NavbarProps {
+  activeCity: City;
   activeTab: string;
   onOpenNewSiteModal: () => void;
   onSelectSite?: (site: CandidateSite) => void;
@@ -26,6 +30,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
+  activeCity,
   activeTab,
   onOpenNewSiteModal,
   onSelectSite,
@@ -33,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigateTab,
   candidateSites = [],
 }) => {
+  const { theme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -70,23 +76,23 @@ export const Navbar: React.FC<NavbarProps> = ({
     : [];
 
   return (
-    <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-100/90 px-6 py-3.5 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100/90 dark:border-slate-800/90 px-6 py-3.5 flex items-center justify-between gap-4 transition-colors">
       {/* Breadcrumbs & Title */}
       <div className="flex flex-col min-w-0">
-        <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+        <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
           <button
             onClick={() => onNavigateTab?.('home')}
-            className="hover:text-indigo-600 font-semibold transition-colors cursor-pointer flex items-center gap-1"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 font-semibold transition-colors cursor-pointer flex items-center gap-1"
           >
             <Home className="w-3.5 h-3.5" />
             <span>GeoReady</span>
           </button>
           <span>/</span>
-          <span className="text-slate-600 font-medium">{currentTabInfo.subtitle}</span>
+          <span className="text-slate-600 dark:text-slate-300 font-medium">{currentTabInfo.subtitle}</span>
           <span>/</span>
-          <span className="text-indigo-600 font-semibold truncate">Surat Metro</span>
+          <span className="text-indigo-600 dark:text-indigo-400 font-semibold truncate">{activeCity.name} Metro</span>
         </div>
-        <h1 className="text-lg font-bold text-slate-900 tracking-tight truncate mt-0.5">
+        <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight truncate mt-0.5">
           {currentTabInfo.title}
         </h1>
       </div>
@@ -106,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               onFocus={() => setShowSearchResults(true)}
               placeholder="Search locations, sites, or areas..."
-              className="w-64 lg:w-80 pl-9 pr-4 py-2 text-xs bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 placeholder-slate-400 rounded-xl border border-slate-200/80 focus:border-indigo-500 focus:outline-hidden focus:ring-3 focus:ring-indigo-500/10 transition-all"
+              className="w-64 lg:w-80 pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100/70 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 rounded-xl border border-slate-200/80 dark:border-slate-700/80 focus:border-indigo-500 focus:outline-hidden focus:ring-3 focus:ring-indigo-500/10 transition-all"
             />
             {searchQuery && (
               <button
@@ -128,8 +134,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="fixed inset-0 z-40"
                 onClick={() => setShowSearchResults(false)}
               />
-              <div className="absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   Candidate Sites ({filteredSites.length})
                 </div>
                 <div className="space-y-1">
@@ -220,11 +226,24 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl border border-slate-200/70 dark:border-slate-700/80 transition-colors relative cursor-pointer group"
+          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-amber-400 transition-transform group-hover:rotate-45" />
+          ) : (
+            <Moon className="w-4 h-4 text-slate-600 transition-transform group-hover:-rotate-12" />
+          )}
+        </button>
+
         {/* Help Button */}
         <div className="relative">
           <button
             onClick={() => setShowHelp(!showHelp)}
-            className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-xl border border-slate-200/70 transition-colors"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl border border-slate-200/70 dark:border-slate-700/80 transition-colors"
             title="Help & GIS Documentation"
           >
             <HelpCircle className="w-4 h-4" />
@@ -233,15 +252,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           {showHelp && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowHelp(false)} />
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-50">
-                <div className="flex items-center gap-2 mb-2 text-indigo-700 font-bold text-xs">
+              <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-4 z-50">
+                <div className="flex items-center gap-2 mb-2 text-indigo-700 dark:text-indigo-400 font-bold text-xs">
                   <Info className="w-4 h-4" />
                   GeoReady Platform Guide
                 </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
                   GeoReady combines multi-criteria GIS spatial evaluation with machine learning. Click any candidate site or H3 hexagon on the map to evaluate readiness scores, configure factor weights, or run catchment analysis.
                 </p>
-                <div className="mt-3 pt-2.5 border-t border-slate-100 text-[10px] text-slate-400">
+                <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 dark:text-slate-500">
                   Target Coordinate System: EPSG:4326 (WGS84)
                 </div>
               </div>
@@ -253,10 +272,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         {activeTab !== 'home' ? (
           <button
             onClick={() => onNavigateTab?.('home')}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
             title="Return to Home & Operating Guide"
           >
-            <Home className="w-3.5 h-3.5 text-indigo-600" />
+            <Home className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>Home & Guide</span>
           </button>
         ) : (
@@ -280,13 +299,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* User Profile Avatar */}
-        <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200/70">
+        <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200/70 dark:border-slate-800">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-semibold flex items-center justify-center text-xs shadow-xs">
             RP
           </div>
           <div className="hidden xl:flex flex-col">
-            <span className="text-xs font-semibold text-slate-800 leading-tight">Rahul Patel</span>
-            <span className="text-[10px] text-slate-400">Analyst</span>
+            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-tight">Rahul Patel</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">Analyst</span>
           </div>
         </div>
       </div>

@@ -10,17 +10,19 @@ import {
   ArrowRight,
   TrendingUp,
 } from 'lucide-react';
-import { CandidateSite } from '../types';
-import { ISOCHRONE_DATA } from '../data/suratData';
+import { CandidateSite, IsochroneLevel, City } from '../types';
+import { ISOCHRONE_DATA } from '../data/mockData';
 import { MapView } from '../components/MapView';
 
 interface AccessibilityPageProps {
+  activeCity: City;
   currentSite: CandidateSite;
   sites: CandidateSite[];
   onSelectSite: (site: CandidateSite) => void;
 }
 
 export const AccessibilityPage: React.FC<AccessibilityPageProps> = ({
+  activeCity,
   currentSite,
   sites,
   onSelectSite,
@@ -54,29 +56,29 @@ export const AccessibilityPage: React.FC<AccessibilityPageProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header Banner with Mode Toggle */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               Accessibility & Isochrone Catchment
             </h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-800/60">
               Multi-Modal Travel Time
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Reachable demographic catchment for <strong className="text-slate-800">{currentSite.name}</strong> across 10, 20, and 30-minute zones.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Reachable demographic catchment for <strong className="text-slate-800 dark:text-slate-200">{currentSite.name}</strong> across 10, 20, and 30-minute zones.
           </p>
         </div>
 
         {/* Drive vs Walk Toggle */}
-        <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200/80">
+        <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
           <button
             onClick={() => setMode('drive')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               mode === 'drive'
-                ? 'bg-white text-indigo-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <Car className="w-4 h-4" />
@@ -86,8 +88,8 @@ export const AccessibilityPage: React.FC<AccessibilityPageProps> = ({
             onClick={() => setMode('walk')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               mode === 'walk'
-                ? 'bg-white text-emerald-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <Footprints className="w-4 h-4" />
@@ -101,7 +103,7 @@ export const AccessibilityPage: React.FC<AccessibilityPageProps> = ({
         {catchment.map((iso, idx) => (
           <div
             key={iso.minutes}
-            className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
               <span
@@ -110,22 +112,22 @@ export const AccessibilityPage: React.FC<AccessibilityPageProps> = ({
               >
                 {iso.minutes} Minutes {mode === 'drive' ? 'Drive' : 'Walk'}
               </span>
-              <Clock className="w-4 h-4 text-slate-400" />
+              <Clock className="w-4 h-4 text-slate-400 dark:text-slate-500" />
             </div>
 
             <div className="my-4">
-              <span className="text-xs text-slate-400 block font-medium">Reachable Population</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 block font-medium">Reachable Population</span>
               <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                   {iso.reachablePopulation.toLocaleString()}
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">residents</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">residents</span>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
+            <div className="pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Catchment Area:</span>
-              <span className="font-mono font-bold text-slate-700">{iso.areaSqKm} km²</span>
+              <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{iso.areaSqKm} km²</span>
             </div>
           </div>
         ))}
@@ -134,12 +136,12 @@ export const AccessibilityPage: React.FC<AccessibilityPageProps> = ({
       {/* Map with Isochrone Polygons & Road Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Map (8 Cols) */}
-        <div className="lg:col-span-8 bg-white p-5 rounded-3xl border border-slate-100 shadow-xs space-y-3">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
               Interactive Catchment Visualizer ({mode.toUpperCase()})
             </h3>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-400 dark:text-slate-500">
               Center: {currentSite.lat.toFixed(4)}, {currentSite.lng.toFixed(4)}
             </span>
           </div>
@@ -173,46 +175,46 @@ export const AccessibilityPage: React.FC<AccessibilityPageProps> = ({
 
         {/* Road & Transit Infrastructure Metrics (4 Cols) */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-xs">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider text-xs">
               Transit & Road Network Metrics
             </h3>
 
             <div className="space-y-3">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <span className="text-[11px] text-slate-400 block font-medium">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 block font-medium">
                   Average Road Accessibility Score
                 </span>
                 <div className="flex items-baseline gap-1 mt-0.5">
-                  <span className="text-2xl font-black text-indigo-700">
+                  <span className="text-2xl font-black text-indigo-700 dark:text-indigo-400">
                     {metrics.roadScore}
                   </span>
-                  <span className="text-xs text-slate-400">/ 100</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">/ 100</span>
                 </div>
-                <div className="w-full h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
+                <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2 overflow-hidden">
                   <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${metrics.roadScore}%` }} />
                 </div>
               </div>
 
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <span className="text-[11px] text-slate-400 block font-medium">Nearest Highway</span>
-                <span className="text-base font-bold text-slate-800">{metrics.nearestHighway}</span>
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 block font-medium">Nearest Highway</span>
+                <span className="text-base font-bold text-slate-800 dark:text-slate-200">{metrics.nearestHighway}</span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <span className="text-[11px] text-slate-400 block font-medium">Nearest Major Road</span>
-                <span className="text-base font-bold text-slate-800">{metrics.nearestMajorRoad}</span>
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 block font-medium">Nearest Major Road</span>
+                <span className="text-base font-bold text-slate-800 dark:text-slate-200">{metrics.nearestMajorRoad}</span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <span className="text-[11px] text-slate-400 block font-medium">Calculated Peak Velocity</span>
-                <span className="text-base font-bold text-slate-800">{metrics.avgTravelSpeed}</span>
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 block font-medium">Calculated Peak Velocity</span>
+                <span className="text-base font-bold text-slate-800 dark:text-slate-200">{metrics.avgTravelSpeed}</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-indigo-50/60 p-5 rounded-3xl border border-indigo-100 text-xs text-slate-600 leading-relaxed">
-            <span className="font-bold text-indigo-800 block mb-1">Catchment Analysis Summary</span>
+          <div className="bg-indigo-50/60 dark:bg-indigo-950/40 p-5 rounded-3xl border border-indigo-100 dark:border-indigo-900/50 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <span className="font-bold text-indigo-800 dark:text-indigo-300 block mb-1">Catchment Analysis Summary</span>
             {mode === 'drive'
               ? 'Vehicular throughput benefits from dual multi-lane arterial feeders. Over 64,200 prospective customers are within easy 20-minute commuter reach.'
               : 'Pedestrian access is reinforced by well-lit paved footpaths and traffic signals at the nearby arterial crossing.'}

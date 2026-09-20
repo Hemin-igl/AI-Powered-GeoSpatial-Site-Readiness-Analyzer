@@ -20,14 +20,16 @@ import {
   MapLayerConfig,
 } from '../types';
 import {
-  SURAT_CENTER,
-  TAPI_RIVER_COORDINATES,
-  SURAT_ROADS,
+  CITY_DATA,
   ISOCHRONE_DATA,
-} from '../data/suratData';
+} from '../data/mockData';
 import { LayerControl } from './LayerControl';
+import { City } from '../types';
+
+const { riverCoordinates: TAPI_RIVER_COORDINATES, roads: SURAT_ROADS } = CITY_DATA.surat;
 
 interface MapViewProps {
+  activeCity?: City;
   sites: CandidateSite[];
   selectedSite: CandidateSite | null;
   onSelectSite: (site: CandidateSite) => void;
@@ -55,6 +57,7 @@ export const MapView: React.FC<MapViewProps> = ({
   isochroneMode = 'drive',
   onSelectHexCell,
   className = 'h-[540px]',
+  activeCity,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -70,15 +73,18 @@ export const MapView: React.FC<MapViewProps> = ({
   const [activeLayerId, setActiveLayerId] = useState<string>('pop_density');
   const [showLayerPanel, setShowLayerPanel] = useState(true);
 
-  // Map projection bounding box for Surat
+  // Map projection bounding box for selected city
   const bounds = useMemo(() => {
+    if (!activeCity) {
+      return { minLat: 21.07, maxLat: 21.26, minLng: 72.67, maxLng: 72.94 }; // Default fallback
+    }
     return {
-      minLat: 21.07,
-      maxLat: 21.26,
-      minLng: 72.67,
-      maxLng: 72.94,
+      minLat: activeCity.lat - 0.1,
+      maxLat: activeCity.lat + 0.1,
+      minLng: activeCity.lng - 0.15,
+      maxLng: activeCity.lng + 0.15,
     };
-  }, []);
+  }, [activeCity]);
 
   const svgWidth = 1000;
   const svgHeight = 700;
@@ -91,22 +97,6 @@ export const MapView: React.FC<MapViewProps> = ({
     return [x, y];
   };
 
-  // Convert Tapi River line to SVG path string
-  const tapiRiverPath = useMemo(() => {
-    const projected = TAPI_RIVER_COORDINATES.map(([lat, lng]) => project(lat, lng));
-    if (projected.length === 0) return '';
-    let d = `M ${projected[0][0]} ${projected[0][1]}`;
-    for (let i = 1; i < projected.length; i++) {
-      const [p1x, p1y] = projected[i - 1];
-      const [p2x, p2y] = projected[i];
-      const midX = (p1x + p2x) / 2;
-      const midY = (p1y + p2y) / 2;
-      d += ` Q ${p1x} ${p1y} ${midX} ${midY}`;
-    }
-    const last = projected[projected.length - 1];
-    d += ` L ${last[0]} ${last[1]}`;
-    return d;
-  }, [bounds]);
 
   // Handle Pan dragging
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -160,8 +150,8 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  // Center on Surat center
-  const centerSurat = () => {
+  // Center on current city
+  const centerCity = () => {
     setZoom(1.2);
     setPan({ x: 0, y: 0 });
   };
@@ -252,7 +242,7 @@ export const MapView: React.FC<MapViewProps> = ({
         <rect width={svgWidth} height={svgHeight} fill="#0f172a" />
         <rect width={svgWidth} height={svgHeight} fill="url(#gis-grid)" />
 
-        {/* Surat Urban Boundary & Landform */}
+        {/* Urban Boundary & Landform Proxy */}
         <path
           d="M 120 80 Q 450 60 780 120 T 920 480 Q 860 620 650 640 T 260 590 Q 140 420 120 80 Z"
           fill="#131e33"
@@ -274,43 +264,6 @@ export const MapView: React.FC<MapViewProps> = ({
             <circle cx="680" cy="270" r="100" fill="#4338ca" opacity="0.20" filter="url(#glow-river)" />
           </g>
         )}
-
-        {/* LAYER 2: Tapi River (Geographic Landmark of Surat) */}
-        <g className="river-layer">
-          {/* River Water Body */}
-          <path
-            d={tapiRiverPath}
-            fill="none"
-            stroke="#0284c7"
-            strokeWidth="18"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.85"
-            filter="url(#glow-river)"
-          />
-          <path
-            d={tapiRiverPath}
-            fill="none"
-            stroke="#38bdf8"
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.9"
-          />
-          {/* Label along Tapi River */}
-          <text
-            x="360"
-            y="410"
-            fill="#7dd3fc"
-            fontSize="10"
-            fontWeight="600"
-            letterSpacing="2"
-            opacity="0.75"
-            transform="rotate(-28 360 410)"
-          >
-            TAPI RIVER
-          </text>
-        </g>
 
         {/* LAYER 3: Environmental Risk Zones (Tapi Floodplain & Marshlands) */}
         {isLayerActive('risk_zones') && (
@@ -363,40 +316,6 @@ export const MapView: React.FC<MapViewProps> = ({
           </g>
         )}
 
-        {/* LAYER 5: Road Accessibility Network */}
-        {isLayerActive('road_access') && (
-          <g opacity={getLayerOpacity('road_access')}>
-            {SURAT_ROADS.map((road, idx) => {
-              const pts = road.coords.map(([lat, lng]) => project(lat, lng));
-              const d = pts
-                .map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt[0]} ${pt[1]}`)
-                .join(' ');
-              return (
-                <g key={idx}>
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke={road.type === 'arterial' ? '#93c5fd' : '#60a5fa'}
-                    strokeWidth={road.type === 'arterial' ? 3.5 : 2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    opacity="0.75"
-                  />
-                  {road.type === 'ring' && (
-                    <path
-                      d={d}
-                      fill="none"
-                      stroke="#818cf8"
-                      strokeWidth="2.5"
-                      strokeDasharray="6 3"
-                      opacity="0.8"
-                    />
-                  )}
-                </g>
-              );
-            })}
-          </g>
-        )}
 
         {/* LAYER 6: H3 Hexagonal Grid Cells (Heatmap of Opportunity) */}
         {(isLayerActive('h3_grid') || isLayerActive('hotspots') || true) && (
@@ -562,28 +481,22 @@ export const MapView: React.FC<MapViewProps> = ({
           })}
         </g>
 
-        {/* Landmark Labels */}
+        {/* Landmark Labels Map Mock */}
         <g className="map-labels pointer-events-none select-none">
           <text x="440" y="470" fill="#94a3b8" fontSize="11" fontWeight="bold" opacity="0.8">
-            VESU
+            CENTRAL DIST
           </text>
           <text x="350" y="270" fill="#94a3b8" fontSize="11" fontWeight="bold" opacity="0.8">
-            ADAJAN
+            NORTH ZONE
           </text>
           <text x="590" y="240" fill="#94a3b8" fontSize="11" fontWeight="bold" opacity="0.8">
-            VARACHHA
-          </text>
-          <text x="540" y="180" fill="#94a3b8" fontSize="11" fontWeight="bold" opacity="0.8">
-            KATARGAM
+            EAST CORRIDOR
           </text>
           <text x="560" y="420" fill="#94a3b8" fontSize="11" fontWeight="bold" opacity="0.8">
-            UDHNA
+            SOUTH HUB
           </text>
           <text x="210" y="310" fill="#94a3b8" fontSize="11" fontWeight="bold" opacity="0.8">
-            HAZIRA
-          </text>
-          <text x="310" y="610" fill="#94a3b8" fontSize="11" fontWeight="bold" opacity="0.8">
-            DUMAS
+            INDUSTRIAL
           </text>
         </g>
       </svg>
@@ -591,7 +504,7 @@ export const MapView: React.FC<MapViewProps> = ({
       {/* Floating Header Badge */}
       <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-slate-900/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/80 text-white text-xs shadow-md">
         <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-        <span className="font-semibold tracking-tight">Surat Metropolitan GIS Engine</span>
+        <span className="font-semibold tracking-tight">{activeCity ? activeCity.name : 'Unknown City'} Base Map</span>
         <span className="text-[10px] text-slate-400 font-mono">EPSG:4326</span>
       </div>
 
@@ -630,9 +543,9 @@ export const MapView: React.FC<MapViewProps> = ({
           <Compass className="w-4 h-4" />
         </button>
         <button
-          onClick={centerSurat}
+          onClick={centerCity}
           className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-200 hover:text-white"
-          title="Center on Surat"
+          title="Center on City"
         >
           <Crosshair className="w-4 h-4" />
         </button>
@@ -727,11 +640,11 @@ export const MapView: React.FC<MapViewProps> = ({
 
       {/* Coordinates & Projection readout (Bottom Right) */}
       <div className="hidden lg:flex absolute bottom-4 right-4 z-10 items-center gap-2 bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-xl border border-slate-700/60 text-slate-400 text-[10px] font-mono shadow-sm">
-        <span>21.1702° N, 72.8311° E</span>
+        <span>{activeCity?.lat ?? 0}° N, {activeCity?.lng ?? 0}° E</span>
         <span>•</span>
         <span>Zoom: {(zoom * 10).toFixed(1)}x</span>
         <span>•</span>
-        <span>SUDA Master Plan 2035</span>
+        <span>Master Plan 2035</span>
       </div>
     </div>
   );

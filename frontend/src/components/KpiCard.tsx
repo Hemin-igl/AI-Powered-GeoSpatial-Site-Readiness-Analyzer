@@ -47,25 +47,25 @@ export const KpiCard: React.FC<KpiCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="group relative bg-white rounded-2xl p-5 border border-slate-100/90 shadow-xs hover:shadow-md hover:border-indigo-100 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+      className="group relative bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100/90 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-900/60 transition-all duration-200 cursor-pointer flex flex-col justify-between"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
-            className={`w-10 h-10 rounded-xl ${iconBgColor} ${iconColor} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}
+            className={`w-10 h-10 rounded-xl ${iconBgColor} dark:bg-slate-800 ${iconColor} dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}
           >
             <Icon className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
               {title}
             </span>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              <span className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                 {value}
               </span>
               {subValue && (
-                <span className="text-xs font-semibold text-slate-400">{subValue}</span>
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">{subValue}</span>
               )}
             </div>
           </div>
@@ -86,12 +86,12 @@ export const KpiCard: React.FC<KpiCardProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50 dark:border-slate-800/80">
         <div
           className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
             isPositive
-              ? 'bg-emerald-50 text-emerald-700'
-              : 'bg-rose-50 text-rose-700'
+              ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'
+              : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400'
           }`}
         >
           {isPositive ? (
@@ -101,7 +101,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
           )}
           <span>{change}</span>
         </div>
-        <span className="text-[11px] text-slate-400 font-medium">vs. last month</span>
+        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">vs. last month</span>
       </div>
     </div>
   );

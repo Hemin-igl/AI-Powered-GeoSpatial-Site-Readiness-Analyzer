@@ -25,19 +25,24 @@ import {
   Sliders,
   ExternalLink,
 } from 'lucide-react';
-import { BusinessType } from '../types';
+import { BusinessType, City } from '../types';
 
 interface HomePageProps {
   onNavigateTab: (tab: string) => void;
   onOpenNewSiteModal?: () => void;
   onOpenAiModal?: () => void;
+  activeCity?: City;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   onNavigateTab,
   onOpenNewSiteModal,
   onOpenAiModal,
+  activeCity,
 }) => {
+  const cityName = activeCity ? activeCity.name : 'Surat';
+  const cityRegion = activeCity ? activeCity.state : 'Gujarat';
+
   // Contact Form State
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -70,9 +75,9 @@ export const HomePage: React.FC<HomePageProps> = ({
     },
     {
       step: '02',
-      title: 'Explore & Pin Locations in Surat',
+      title: `Explore & Pin Locations in ${cityName}`,
       shortDesc: 'Scan 45+ candidate zones or add custom coordinates',
-      desc: 'Browse prime localities across Surat—including Vesu, Adajan, Varachha, Dumas, and Hazira Industrial Corridor—or pin any custom coordinate directly on the interactive map.',
+      desc: `Browse prime localities across ${cityName} or pin any custom coordinate directly on the interactive map.`,
       actionLabel: 'Open Opportunity Map',
       tabTarget: 'opportunity-map',
       icon: MapPin,
@@ -96,7 +101,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       actionLabel: 'View Accessibility Catchments',
       tabTarget: 'accessibility',
       icon: Navigation,
-      tip: 'Isochrones reflect Surat urban street grid speeds and bridge crossing bottlenecks.',
+      tip: `Isochrones reflect ${cityName} urban street grid speeds and bottlenecks.`,
     },
     {
       step: '05',
@@ -113,48 +118,48 @@ export const HomePage: React.FC<HomePageProps> = ({
   const quickPillars = [
     {
       title: 'Uber H3 Hexagonal Grid',
-      desc: 'Resolution-8 spatial indexing across Surat provides uniform cell-level demographic comparisons without arbitrary boundary bias.',
+      desc: `Resolution-8 spatial indexing across ${cityName} provides uniform cell-level demographic comparisons without arbitrary boundary bias.`,
       icon: Layers,
     },
     {
       title: 'Isochrone Catchment Physics',
-      desc: 'Accurate drive-time and walk-time polygons calibrated to Surat ring roads, flyovers, and Tapi bridge crossings.',
+      desc: `Accurate drive-time and walk-time polygons calibrated to ${cityName} mobility patterns.`,
       icon: Crosshair,
     },
     {
       title: 'Environmental Resilience',
-      desc: 'Integrates Tapi River 100-year flood lines, low-elevation coastal tidal surge buffers, and industrial hazard setbacks.',
+      desc: 'Integrates local environmental risk factors and industrial hazard setbacks.',
       icon: ShieldCheck,
     },
   ];
 
   return (
-    <div className="min-h-full space-y-16 pb-16">
+    <div className="min-h-full space-y-16 pb-16 animate-in fade-in duration-300">
       {/* 1. MINIMALIST HERO SECTION */}
       <motion.section
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="relative overflow-hidden rounded-3xl bg-white border border-slate-200/80 p-8 sm:p-12 lg:p-16 shadow-xs"
+        className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-8 sm:p-12 lg:p-16 shadow-xs"
       >
         {/* Subtle decorative background gradient */}
-        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-96 h-96 rounded-full bg-gradient-to-br from-indigo-50/80 via-blue-50/40 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 -mb-16 w-80 h-80 rounded-full bg-gradient-to-tr from-slate-50 to-indigo-50/30 blur-2xl pointer-events-none" />
+        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-96 h-96 rounded-full bg-gradient-to-br from-indigo-50/80 via-blue-50/40 to-transparent dark:from-indigo-950/40 dark:via-blue-950/20 dark:to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 -mb-16 w-80 h-80 rounded-full bg-gradient-to-tr from-slate-50 to-indigo-50/30 dark:from-slate-900 dark:to-indigo-950/30 blur-2xl pointer-events-none" />
 
         <div className="relative z-10 max-w-3xl space-y-6">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50/80 border border-indigo-100 text-indigo-700 text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
-            <span>Surat Metropolitan Spatial Intelligence Platform</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
+            <span>{cityName} Spatial Intelligence Platform</span>
           </div>
 
           {/* Headline */}
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Find the optimal site for your next venture in Surat.
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+            Find the optimal site for your next venture in {cityName}.
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
             GeoReady removes the guesswork from commercial site selection. Combine real-time
             demographics, road catchments, competitor clustering, and flood risk models into
             a single, intuitive decision platform.
@@ -172,15 +177,15 @@ export const HomePage: React.FC<HomePageProps> = ({
 
             <button
               onClick={() => onNavigateTab('site-analysis')}
-              className="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-700 font-semibold text-sm border border-slate-200/80 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 font-semibold text-sm border border-slate-200/80 dark:border-slate-700 transition-all cursor-pointer"
             >
-              <Compass className="w-4 h-4 text-indigo-600" />
+              <Compass className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>Explore Site Analysis</span>
             </button>
 
             <a
               href="#how-it-works"
-              className="inline-flex items-center gap-1.5 px-4 py-3.5 rounded-2xl text-slate-500 hover:text-slate-800 font-medium text-sm transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-3.5 rounded-2xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium text-sm transition-colors"
             >
               <span>How it works</span>
               <ChevronRight className="w-4 h-4" />
@@ -188,22 +193,22 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
 
           {/* Quick Metrics Bar */}
-          <div className="pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="pt-6 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <p className="text-2xl font-bold text-slate-900">45+</p>
-              <p className="text-xs text-slate-500 font-medium">Surat Candidate Sites</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">45+</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{cityName} Candidate Sites</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-indigo-600">5</p>
-              <p className="text-xs text-slate-500 font-medium">Industry Presets</p>
+              <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">5</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Industry Presets</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">H3 Hex</p>
-              <p className="text-xs text-slate-500 font-medium">Resolution-8 Tessellation</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">H3 Hex</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Resolution-8 Tessellation</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-emerald-600">Tapi GIS</p>
-              <p className="text-xs text-slate-500 font-medium">Flood & Hazard Screening</p>
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">Local GIS</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Environmental Screening</p>
             </div>
           </div>
         </div>
@@ -213,14 +218,14 @@ export const HomePage: React.FC<HomePageProps> = ({
       <section id="how-it-works" className="space-y-6 scroll-mt-20">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 tracking-wide uppercase mb-1">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wide uppercase mb-1">
               <HelpCircle className="w-3.5 h-3.5" />
               <span>User Guide & Instructions</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               How to operate this platform
             </h2>
-            <p className="text-sm text-slate-500 mt-1 max-w-xl">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
               Follow these simple sequential steps to evaluate location suitability, customize
               weights, and obtain actionable geospatial recommendations.
             </p>
@@ -229,7 +234,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onNavigateTab('overview')}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 inline-flex items-center gap-1 cursor-pointer"
             >
               <span>Skip to live dashboard</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -250,34 +255,34 @@ export const HomePage: React.FC<HomePageProps> = ({
                   onClick={() => setActiveStep(index)}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
                     isSelected
-                      ? 'bg-white border-indigo-500 shadow-md ring-1 ring-indigo-500/10'
-                      : 'bg-white/70 hover:bg-white border-slate-200/80 hover:border-slate-300'
+                      ? 'bg-white dark:bg-slate-900 border-indigo-500 dark:border-indigo-500 shadow-md ring-1 ring-indigo-500/10'
+                      : 'bg-white/70 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   <div
                     className={`p-2.5 rounded-xl shrink-0 ${
                       isSelected
-                        ? 'bg-indigo-600 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-600'
+                        ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-mono font-bold text-indigo-600">
+                      <span className="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
                         STEP {s.step}
                       </span>
                       {isSelected && (
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded-full border border-indigo-100">
+                        <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/60">
                           Active Step
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 mt-0.5 truncate">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5 truncate">
                       {s.title}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{s.shortDesc}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{s.shortDesc}</p>
                   </div>
                 </div>
               );
@@ -291,32 +296,32 @@ export const HomePage: React.FC<HomePageProps> = ({
               initial={{ opacity: 0, x: 8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className="h-full bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 flex flex-col justify-between shadow-xs"
+              className="h-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 flex flex-col justify-between shadow-xs"
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-slate-400">
+                  <span className="text-xs font-mono font-bold text-slate-400 dark:text-slate-500">
                     PHASE {steps[activeStep].step} OF 05
                   </span>
-                  <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1 rounded-full">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
                     {steps[activeStep].shortDesc}
                   </span>
                 </div>
 
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
                   {steps[activeStep].title}
                 </h3>
 
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {steps[activeStep].desc}
                 </p>
 
                 {/* Practical Tip Box */}
-                <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100/80 flex items-start gap-3">
-                  <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100/80 dark:border-indigo-900/50 flex items-start gap-3">
+                  <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-indigo-900">Practical Operational Tip</p>
-                    <p className="text-xs text-indigo-700/90 mt-0.5">
+                    <p className="text-xs font-semibold text-indigo-900 dark:text-indigo-300">Practical Operational Tip</p>
+                    <p className="text-xs text-indigo-700/90 dark:text-indigo-300/90 mt-0.5">
                       {steps[activeStep].tip}
                     </p>
                   </div>
@@ -324,10 +329,10 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
 
               {/* Action trigger button */}
-              <div className="pt-6 mt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
                   <span>Navigation target:</span>
-                  <span className="font-mono text-slate-700 font-medium">
+                  <span className="font-mono text-slate-700 dark:text-slate-300 font-medium">
                     /{steps[activeStep].tabTarget}
                   </span>
                 </div>
@@ -348,39 +353,39 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           <div
             onClick={() => onNavigateTab('overview')}
-            className="p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group"
+            className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <MapIcon className="w-4 h-4" />
             </div>
-            <h4 className="text-sm font-bold text-slate-900">Main Map & Overview</h4>
-            <p className="text-xs text-slate-500 mt-1">
-              Visual map layer with sites, Tapi river, and live suitability scoring.
+            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Main Map & Overview</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Visual map layer with sites and live suitability scoring.
             </p>
           </div>
 
           <div
             onClick={() => onNavigateTab('opportunity-map')}
-            className="p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group"
+            className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <Compass className="w-4 h-4" />
             </div>
-            <h4 className="text-sm font-bold text-slate-900">Opportunity Zones</h4>
-            <p className="text-xs text-slate-500 mt-1">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Opportunity Zones</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Discover underserved pockets with high footfall and low competitor presence.
             </p>
           </div>
 
           <div
             onClick={() => onNavigateTab('reports')}
-            className="p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group"
+            className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <FileText className="w-4 h-4" />
             </div>
-            <h4 className="text-sm font-bold text-slate-900">Executive Reports</h4>
-            <p className="text-xs text-slate-500 mt-1">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Executive Reports</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Download comprehensive PDF & CSV spatial audit dossiers.
             </p>
           </div>
@@ -390,17 +395,15 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* 3. ABOUT US SECTION */}
       <section id="about-us" className="space-y-6 scroll-mt-20">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 tracking-wide uppercase mb-1">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wide uppercase mb-1">
             <Users className="w-3.5 h-3.5" />
             <span>About Us</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Built for Surat's high-velocity urban expansion
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            Built for high-velocity urban expansion
           </h2>
-          <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-            Surat is recognized globally as a powerhouse of textile manufacturing, diamond cutting,
-            and emerging clean-tech corridors. GeoReady bridges academic GIS research with real-world
-            enterprise site selection.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+            {cityName} is recognized globally for its dynamic economic growth. GeoReady bridges academic GIS research with real-world enterprise site selection for the {cityRegion} region.
           </p>
         </div>
 
@@ -411,37 +414,37 @@ export const HomePage: React.FC<HomePageProps> = ({
             return (
               <div
                 key={pillar.title}
-                className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3"
+                className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3"
               >
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                   <Icon className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">{pillar.title}</h3>
-                <p className="text-xs text-slate-600 leading-relaxed">{pillar.desc}</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{pillar.title}</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{pillar.desc}</p>
               </div>
             );
           })}
         </div>
 
         {/* Story / Mission narrative */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-slate-50 border border-slate-200/70 text-slate-700 space-y-3">
-          <h3 className="text-base font-bold text-slate-900">Our Mission</h3>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+        <div className="p-6 sm:p-8 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 text-slate-700 dark:text-slate-300 space-y-3">
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Our Mission</h3>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             Traditional feasibility studies take weeks, cost thousands of dollars, and rely on
             static spreadsheets. We created GeoReady to empower business founders, logistics planners,
             and retail operators with instant spatial intelligence. By pairing Uber H3 indexing,
             demographic catchments, and automated Gemini reasoning, we make complex GIS intuitive and
-            accessible for every decision maker in Surat.
+            accessible for every decision maker in {cityName}.
           </p>
-          <div className="pt-2 flex flex-wrap gap-4 text-xs font-semibold text-slate-600">
+          <div className="pt-2 flex flex-wrap gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Grounded in Surat Municipal Data
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Grounded in Local Municipal Data
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Non-destructive Multi-criteria Weighting
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Non-destructive Multi-criteria Weighting
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Zero GIS Degree Required
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Zero GIS Degree Required
             </span>
           </div>
         </div>
@@ -450,15 +453,15 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* 4. CONTACT US SECTION */}
       <section id="contact-us" className="space-y-6 scroll-mt-20">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 tracking-wide uppercase mb-1">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wide uppercase mb-1">
             <Mail className="w-3.5 h-3.5" />
             <span>Contact Us</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
             Get in touch with our spatial team
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Have questions about custom datasets, corporate site evaluations, or Surat zoning rules?
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Have questions about custom datasets, corporate site evaluations, or zoning rules?
             Send us a message and our GIS analysts will respond within 24 hours.
           </p>
         </div>
@@ -466,48 +469,47 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left: Contact Info & Address */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-5">
-              <h3 className="text-base font-bold text-slate-900">Office & Direct Channels</h3>
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-5">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Office & Direct Channels</h3>
 
               <div className="space-y-4 text-xs">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xl bg-slate-100 text-slate-600 shrink-0 mt-0.5">
+                  <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800">Surat Operations Hub</p>
-                    <p className="text-slate-500 mt-0.5 leading-relaxed">
-                      Athwa Lines, Ring Road, near Surat Municipal Corporation (SMC), Surat,
-                      Gujarat 395001, India
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">{cityName} Operations Hub</p>
+                    <p className="text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      Main Commercial Ring Road, {cityName}, {cityRegion}, {activeCity?.country || 'India'}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xl bg-slate-100 text-slate-600 shrink-0 mt-0.5">
+                  <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800">Inquiry & Datasets</p>
-                    <p className="text-slate-500 mt-0.5 font-mono">contact@geoready.surat.in</p>
-                    <p className="text-slate-500 font-mono">spatial-team@geoready.in</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">Inquiry & Datasets</p>
+                    <p className="text-slate-500 dark:text-slate-400 mt-0.5 font-mono">contact@geoready.local</p>
+                    <p className="text-slate-500 dark:text-slate-400 font-mono">spatial-team@geoready.in</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xl bg-slate-100 text-slate-600 shrink-0 mt-0.5">
+                  <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">
                     <Clock className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800">Operational Hours</p>
-                    <p className="text-slate-500 mt-0.5">Monday – Friday: 9:00 AM – 6:00 PM IST</p>
-                    <p className="text-slate-400 mt-0.5">Saturday: 10:00 AM – 2:00 PM IST</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">Operational Hours</p>
+                    <p className="text-slate-500 dark:text-slate-400 mt-0.5">Monday – Friday: 9:00 AM – 6:00 PM IST</p>
+                    <p className="text-slate-400 dark:text-slate-500 mt-0.5">Saturday: 10:00 AM – 2:00 PM IST</p>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100">
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed">
                   Note: For confidential enterprise site audits or private land parcels, you can
                   request NDA-protected custom data layers.
                 </p>
@@ -517,18 +519,18 @@ export const HomePage: React.FC<HomePageProps> = ({
 
           {/* Right: Contact Form */}
           <div className="lg:col-span-7">
-            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
+            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
               {submitted ? (
                 <div className="py-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900">Message Received!</h3>
-                  <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-                    Thank you, <strong className="text-slate-800">{contactForm.name}</strong>. Our
-                    Surat GIS analyst will review your inquiry regarding{' '}
-                    <strong className="text-slate-800">{contactForm.topic}</strong> and email you back
-                    shortly at <strong className="text-slate-800">{contactForm.email}</strong>.
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Message Received!</h3>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                    Thank you, <strong className="text-slate-800 dark:text-slate-200">{contactForm.name}</strong>. Our
+                    GIS analyst will review your inquiry regarding{' '}
+                    <strong className="text-slate-800 dark:text-slate-200">{contactForm.topic}</strong> and email you back
+                    shortly at <strong className="text-slate-800 dark:text-slate-200">{contactForm.email}</strong>.
                   </p>
                   <button
                     onClick={() => {
@@ -540,18 +542,18 @@ export const HomePage: React.FC<HomePageProps> = ({
                         message: '',
                       });
                     }}
-                    className="mt-4 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer transition-colors"
+                    className="mt-4 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold cursor-pointer transition-colors"
                   >
                     Send another inquiry
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-4">
-                  <h3 className="text-base font-bold text-slate-900">Send an Inquiry</h3>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Send an Inquiry</h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Full Name *</label>
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Full Name *</label>
                       <input
                         type="text"
                         required
@@ -560,12 +562,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                           setContactForm({ ...contactForm, name: e.target.value })
                         }
                         placeholder="e.g. Ramesh Patel"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Work Email *</label>
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Work Email *</label>
                       <input
                         type="email"
                         required
@@ -574,30 +576,30 @@ export const HomePage: React.FC<HomePageProps> = ({
                           setContactForm({ ...contactForm, email: e.target.value })
                         }
                         placeholder="name@company.com"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Inquiry Topic</label>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Inquiry Topic</label>
                     <select
                       value={contactForm.topic}
                       onChange={(e) =>
                         setContactForm({ ...contactForm, topic: e.target.value })
                       }
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer"
                     >
-                      <option value="Site Consultation">Commercial Site Consultation</option>
-                      <option value="Custom Data Integration">Custom Data Layer Integration</option>
-                      <option value="Surat Zoning Guidance">Surat Zoning & Flood Regulations</option>
-                      <option value="Enterprise Platform Access">Enterprise / Government License</option>
-                      <option value="Other Feedback">General Question or Feedback</option>
+                      <option value="Site Consultation" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Commercial Site Consultation</option>
+                      <option value="Custom Data Integration" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Custom Data Layer Integration</option>
+                      <option value="Zoning Guidance" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Local Zoning & Flood Regulations</option>
+                      <option value="Enterprise Platform Access" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Enterprise / Government License</option>
+                      <option value="Other Feedback" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">General Question or Feedback</option>
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Message</label>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Message</label>
                     <textarea
                       rows={4}
                       value={contactForm.message}
@@ -605,12 +607,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                         setContactForm({ ...contactForm, message: e.target.value })
                       }
                       placeholder="Describe your location requirements, intended industry archetype, or questions..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                     />
                   </div>
 
                   <div className="pt-2 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-400">Response time: &lt; 24 hours</span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500">Response time: &lt; 24 hours</span>
                     <button
                       type="submit"
                       className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm cursor-pointer transition-all active:scale-95"
@@ -627,28 +629,28 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 5. MINIMALIST FOOTER */}
-      <footer className="pt-12 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      <footer className="pt-12 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-500">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px]">
             G
           </div>
-          <span className="font-semibold text-slate-700">GeoReady Surat</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-300">GeoReady {cityName}</span>
           <span>© {new Date().getFullYear()} All rights reserved.</span>
         </div>
 
         <div className="flex items-center gap-6">
-          <a href="#how-it-works" className="hover:text-slate-700 transition-colors">
+          <a href="#how-it-works" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
             Instructions
           </a>
-          <a href="#about-us" className="hover:text-slate-700 transition-colors">
+          <a href="#about-us" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
             About Us
           </a>
-          <a href="#contact-us" className="hover:text-slate-700 transition-colors">
+          <a href="#contact-us" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
             Contact
           </a>
           <button
             onClick={() => onNavigateTab('overview')}
-            className="text-indigo-600 hover:underline font-medium cursor-pointer"
+            className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium cursor-pointer"
           >
             Launch Map
           </button>

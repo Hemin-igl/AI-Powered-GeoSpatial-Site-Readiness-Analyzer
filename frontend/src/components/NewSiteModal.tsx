@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { X, MapPin, Sparkles, Building2, Compass, Loader2 } from 'lucide-react';
-import { BusinessType } from '../types';
+import { BusinessType, City } from '../types';
 
 interface NewSiteModalProps {
+  activeCity: City;
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {
@@ -14,13 +15,14 @@ interface NewSiteModalProps {
 }
 
 export const NewSiteModal: React.FC<NewSiteModalProps> = ({
+  activeCity,
   isOpen,
   onClose,
   onSubmit,
 }) => {
-  const [name, setName] = useState('Surat Central Gateway');
-  const [lat, setLat] = useState('21.1702');
-  const [lng, setLng] = useState('72.8311');
+  const [name, setName] = useState(`${activeCity.name} Central Gateway`);
+  const [lat, setLat] = useState(activeCity.lat.toString());
+  const [lng, setLng] = useState(activeCity.lng.toString());
   const [businessType, setBusinessType] = useState<BusinessType>('Retail Store');
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +38,7 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
     setLoading(true);
     try {
       await onSubmit({
-        name: name.trim() || 'Custom Surat Location',
+        name: name.trim() || `Custom ${activeCity.name} Location`,
         lat: latNum,
         lng: lngNum,
         businessType,
@@ -47,7 +49,7 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
     }
   };
 
-  // Quick preset locations in Surat
+  // Quick preset locations in City
   const presets = [
     { label: 'Vesu VIP Road', lat: '21.1448', lng: '72.7758' },
     { label: 'Adajan Palika', lat: '21.1920', lng: '72.7950' },
@@ -62,23 +64,23 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
         onClick={onClose}
       />
 
-      <div className="relative bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden z-10 animate-in zoom-in-95 duration-200">
+      <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 max-w-lg w-full overflow-hidden z-10 animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-gradient-to-r from-indigo-50/60 to-purple-50/40">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-indigo-50/60 to-purple-50/40 dark:from-indigo-950/40 dark:to-purple-950/30">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
               <Compass className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">New Site Spatial Analysis</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">New Site Spatial Analysis</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Input coordinates to evaluate site readiness & catchment
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-white transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-white dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -88,23 +90,23 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Site Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Site Identifier or Name
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Vesu Commercial Hub"
+              placeholder={`e.g. ${activeCity.name} Commercial Hub`}
               required
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
             />
           </div>
 
           {/* Coordinates Grid */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Latitude (°N)
               </label>
               <input
@@ -114,11 +116,11 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
                 onChange={(e) => setLat(e.target.value)}
                 placeholder="21.1702"
                 required
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 font-mono focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Longitude (°E)
               </label>
               <input
@@ -128,15 +130,15 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
                 onChange={(e) => setLng(e.target.value)}
                 placeholder="72.8311"
                 required
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 font-mono focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
               />
             </div>
           </div>
 
           {/* Quick Coordinate Presets */}
           <div>
-            <span className="text-[11px] font-medium text-slate-400 block mb-1.5">
-              Quick Surat presets:
+            <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 block mb-1.5">
+              Quick {activeCity.name} presets:
             </span>
             <div className="flex flex-wrap gap-1.5">
               {presets.map((p) => (
@@ -148,7 +150,7 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
                     setLat(p.lat);
                     setLng(p.lng);
                   }}
-                  className="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-[11px] text-slate-600 font-medium transition-colors"
+                  className="px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-[11px] text-slate-600 dark:text-slate-300 font-medium transition-colors"
                 >
                   {p.label}
                 </button>
@@ -158,28 +160,28 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
 
           {/* Business Type Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Business Archetype
             </label>
             <select
               value={businessType}
               onChange={(e) => setBusinessType(e.target.value as BusinessType)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
             >
-              <option value="Retail Store">Retail Store (High footfall & catchment)</option>
-              <option value="Warehouse">Warehouse (Logistics & freight arteries)</option>
-              <option value="EV Charging Station">EV Charging Station (Transit throughput)</option>
-              <option value="Telecom Tower">Telecom Tower (Elevation & subscriber density)</option>
-              <option value="Renewable Energy">Renewable Energy (Grid interconnection & solar)</option>
+              <option value="Retail Store" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Retail Store (High footfall & catchment)</option>
+              <option value="Warehouse" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Warehouse (Logistics & freight arteries)</option>
+              <option value="EV Charging Station" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">EV Charging Station (Transit throughput)</option>
+              <option value="Telecom Tower" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Telecom Tower (Elevation & subscriber density)</option>
+              <option value="Renewable Energy" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Renewable Energy (Grid interconnection & solar)</option>
             </select>
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
+          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-colors"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition-colors"
             >
               Cancel
             </button>
