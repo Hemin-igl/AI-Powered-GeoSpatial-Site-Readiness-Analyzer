@@ -40,48 +40,30 @@ import { ISOCHRONE_DATA } from '../data/mockData';
 import {
   generateRealWorldCompetitors,
   generateH3GridAround,
-  generate3DBuildingsAround,
   analyzeSite,
 } from '../services/gisService';
 
-const MAP_API_KEY = import.meta.env.VITE_MAP_API_KEY || 'cb1_3r5w_1_870f82872ede2321c67a7ba6';
-
-// MapLibre Basemap Style Presets (Powered by high-res CARTO, OpenStreetMap, and ESRI Satellite with overscaling protection)
+// Vector Map Styles using OpenFreeMap & Satellite Hybrid
 const MAP_STYLES = {
+  bright: {
+    name: 'OpenFreeMap Bright',
+    icon: Sun,
+    styleUrl: 'https://tiles.openfreemap.org/styles/bright',
+  },
   dark: {
-    name: 'Dark Matter GIS',
+    name: 'OpenFreeMap Dark',
     icon: Moon,
-    style: {
-      version: 8,
-      sources: {
-        'carto-dark': {
-          type: 'raster',
-          tiles: [
-            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-            'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-            'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-            'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-          ],
-          tileSize: 256,
-          maxzoom: 20,
-          attribution: '&copy; CARTO &copy; OpenStreetMap contributors',
-        },
-      },
-      layers: [
-        {
-          id: 'carto-dark-layer',
-          type: 'raster',
-          source: 'carto-dark',
-          minzoom: 0,
-          maxzoom: 22,
-        },
-      ],
-    },
+    styleUrl: 'https://tiles.openfreemap.org/styles/dark',
+  },
+  liberty: {
+    name: 'OSM Navigation',
+    icon: Navigation,
+    styleUrl: 'https://tiles.openfreemap.org/styles/liberty',
   },
   satellite: {
     name: 'Satellite Hybrid',
     icon: Globe,
-    style: {
+    styleUrl: {
       version: 8,
       sources: {
         satellite: {
@@ -90,8 +72,8 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
-          maxzoom: 16,
-          attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+          maxzoom: 19,
+          attribution: '&copy; Esri, Maxar',
         },
         'satellite-labels': {
           type: 'raster',
@@ -99,7 +81,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
-          maxzoom: 16,
+          maxzoom: 19,
           attribution: '&copy; Esri',
         },
       },
@@ -109,69 +91,14 @@ const MAP_STYLES = {
           type: 'raster',
           source: 'satellite',
           minzoom: 0,
-          maxzoom: 22,
+          maxzoom: 19,
         },
         {
           id: 'satellite-labels-layer',
           type: 'raster',
           source: 'satellite-labels',
           minzoom: 0,
-          maxzoom: 22,
-        },
-      ],
-    },
-  },
-  streets: {
-    name: 'OSM Navigation',
-    icon: Navigation,
-    style: {
-      version: 8,
-      sources: {
-        'osm-streets': {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
           maxzoom: 19,
-          attribution: '&copy; OpenStreetMap contributors',
-        },
-      },
-      layers: [
-        {
-          id: 'osm-streets-layer',
-          type: 'raster',
-          source: 'osm-streets',
-          minzoom: 0,
-          maxzoom: 22,
-        },
-      ],
-    },
-  },
-  light: {
-    name: 'Positron Light',
-    icon: Sun,
-    style: {
-      version: 8,
-      sources: {
-        'carto-light': {
-          type: 'raster',
-          tiles: [
-            'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-            'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-            'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-            'https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-          ],
-          tileSize: 256,
-          maxzoom: 20,
-          attribution: '&copy; CARTO &copy; OpenStreetMap contributors',
-        },
-      },
-      layers: [
-        {
-          id: 'carto-light-layer',
-          type: 'raster',
-          source: 'carto-light',
-          minzoom: 0,
-          maxzoom: 22,
         },
       ],
     },
@@ -232,31 +159,33 @@ const createIsochronePolygon = (
   const radiusKm = (speedKmH * (minutes / 60)) * 0.75;
   const numPoints = 32;
   const coords: [number, number][] = [];
-
-  const latRadius = radiusKm / 111.32;
-  const lngRadius = radiusKm / (111.32 * Math.cos((centerLat * Math.PI) / 180));
-
-  for (let i = 0; i < numPoints; i++) {
-    const angle = (2 * Math.PI * i) / numPoints;
-    const noise = 1 + 0.12 * Math.sin(angle * 3) + 0.08 * Math.cos(angle * 5);
-    const x = centerLng + lngRadius * noise * Math.cos(angle);
-    const y = centerLat + latRadius * noise * Math.sin(angle);
-    coords.push([x, y]);
+  for (let i = 0; i <= numPoints; i++) {
+    const angle = (i * 2 * Math.PI) / numPoints;
+    // Slight organic distortion for realism
+    const distortion = 1 + 0.12 * Math.sin(angle * 3) + 0.08 * Math.cos(angle * 5);
+    const effRadius = radiusKm * distortion;
+    const dLat = (effRadius / 111.32) * Math.sin(angle);
+    const dLng = (effRadius / (111.32 * Math.cos((centerLat * Math.PI) / 180))) * Math.cos(angle);
+    coords.push([centerLng + dLng, centerLat + dLat]);
   }
-  coords.push(coords[0]);
   return coords;
 };
 
-// Calculate geodesic polygon area in sq km
+// Approximate polygon area in km2 using geodesic formula
 const calculatePolygonAreaKm2 = (coords: [number, number][]): number => {
   if (coords.length < 3) return 0;
-  let area = 0;
-  for (let i = 0; i < coords.length - 1; i++) {
+  let total = 0;
+  const earthRadiusKm = 6371;
+
+  for (let i = 0; i < coords.length; i++) {
     const [x1, y1] = coords[i];
-    const [x2, y2] = coords[i + 1];
-    area += ((x2 - x1) * 111.32 * Math.cos(((y1 + y2) / 2 * Math.PI) / 180)) * ((y2 - y1) * 111.32);
+    const [x2, y2] = coords[(i + 1) % coords.length];
+    const radY1 = (y1 * Math.PI) / 180;
+    const radY2 = (y2 * Math.PI) / 180;
+    const radXDiff = ((x2 - x1) * Math.PI) / 180;
+    total += radXDiff * (2 + Math.sin(radY1) + Math.sin(radY2));
   }
-  return Math.abs(Number(area.toFixed(2)));
+  return Math.abs((total * earthRadiusKm * earthRadiusKm) / 4);
 };
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -266,8 +195,6 @@ export const MapView: React.FC<MapViewProps> = ({
   competitors = [],
   h3Cells = [],
   layers,
-  onToggleLayer = () => {},
-  onChangeOpacity = () => {},
   showIsochrones = true,
   isochroneMode = 'drive',
   onSelectHexCell,
@@ -281,13 +208,16 @@ export const MapView: React.FC<MapViewProps> = ({
   const tempMarkerRef = useRef<Marker | null>(null);
   const popupRef = useRef<Popup | null>(null);
 
-  const [currentStyle, setCurrentStyle] = useState<StyleKey>('dark');
+  const [currentStyle, setCurrentStyle] = useState<StyleKey>('bright');
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [activeLayerId, setActiveLayerId] = useState<string>('pop_density');
   const [cursorCoords, setCursorCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [zoomLevel, setZoomLevel] = useState<number>(12);
+  const [zoomLevel, setZoomLevel] = useState<number>(15.5);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 3D Isometric View Mode State
+  const [is3DMode, setIs3DMode] = useState(true);
 
   // Drawing Tools State
   const [toolMode, setToolMode] = useState<ToolMode>('navigate');
@@ -312,48 +242,46 @@ export const MapView: React.FC<MapViewProps> = ({
     return [72.8311, 21.1702];
   }, [selectedSite, activeCity, sites]);
 
-  // Merge real-world competitors around active site / coordinates if array is empty
+  // Real-world competitors around target area
   const activeCompetitors = useMemo<CompetitorPoint[]>(() => {
     if (competitors.length > 0) return competitors;
     const center = selectedSite || (sites.length > 0 ? sites[0] : { lat: defaultCenter[1], lng: defaultCenter[0], businessType: 'Retail Store' as BusinessType });
     return generateRealWorldCompetitors(center.lat, center.lng, center.businessType || 'Retail Store');
   }, [competitors, selectedSite, sites, defaultCenter]);
 
-  // Merge dynamic H3 grid if array is empty
+  // Dynamic H3 hexagonal grid
   const activeH3Cells = useMemo<H3CellData[]>(() => {
     if (h3Cells.length > 0) return h3Cells;
     const center = selectedSite || (sites.length > 0 ? sites[0] : { lat: defaultCenter[1], lng: defaultCenter[0] });
     return generateH3GridAround(center.lat, center.lng);
   }, [h3Cells, selectedSite, sites, defaultCenter]);
 
-  // 3D Isometric View Mode State
-  const [is3DMode, setIs3DMode] = useState(true);
-
+  // Toggle 3D Tilt View Mode
   const toggle3DMode = () => {
     const next = !is3DMode;
     setIs3DMode(next);
     if (mapRef.current) {
       mapRef.current.easeTo({
-        pitch: next ? 54 : 0,
-        bearing: next ? -18 : 0,
+        pitch: next ? 45 : 0,
+        bearing: next ? -17.6 : 0,
         duration: 1000,
       });
     }
   };
 
-  // 1. Initialize MapLibre Map
+  // 1. Initialize Vector MapLibre Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     const map = new MapLibreMap({
       container: mapContainerRef.current,
-      style: MAP_STYLES[currentStyle].style as any,
+      style: MAP_STYLES[currentStyle].styleUrl as any,
       center: defaultCenter,
-      zoom: 13.5,
-      pitch: 52,
-      bearing: -16,
-      maxZoom: 19.5,
-      maxPitch: 70,
+      zoom: 15.5,
+      pitch: 45,
+      bearing: -17.6,
+      maxZoom: 22,
+      canvasContextAttributes: { antialias: true },
       attributionControl: false,
     });
 
@@ -368,7 +296,7 @@ export const MapView: React.FC<MapViewProps> = ({
     });
 
     map.on('load', () => {
-      updateMapLayers(map);
+      setup3DBuildingsAndLayers(map);
     });
 
     return () => {
@@ -389,7 +317,6 @@ export const MapView: React.FC<MapViewProps> = ({
       const { lng, lat } = e.lngLat;
 
       if (toolMode === 'pin') {
-        // Drop pin & evaluate instant readiness
         setIsEvaluatingPoint(true);
         if (tempMarkerRef.current) tempMarkerRef.current.remove();
 
@@ -406,7 +333,6 @@ export const MapView: React.FC<MapViewProps> = ({
         setInspectedSite(analyzed);
         setIsEvaluatingPoint(false);
       } else if (toolMode === 'polygon') {
-        // Add vertex to polygon
         setPolygonPoints((prev) => {
           const next = [...prev, [lng, lat] as [number, number]];
           if (next.length >= 3) {
@@ -460,7 +386,7 @@ export const MapView: React.FC<MapViewProps> = ({
         id: 'drawn-polygon-fill',
         type: 'fill',
         source: 'drawn-polygon-source',
-        paint: { 'fill-color': '#6366f1', 'fill-opacity': 0.3 },
+        paint: { 'fill-color': '#6366f1', 'fill-opacity': 0.35 },
       });
       map.addLayer({
         id: 'drawn-polygon-stroke',
@@ -479,7 +405,9 @@ export const MapView: React.FC<MapViewProps> = ({
     if (selectedSite) {
       map.flyTo({
         center: [selectedSite.lng, selectedSite.lat],
-        zoom: 13.8,
+        zoom: 15.5,
+        pitch: is3DMode ? 45 : 0,
+        bearing: is3DMode ? -17.6 : 0,
         speed: 1.2,
         curve: 1.4,
         essential: true,
@@ -487,18 +415,79 @@ export const MapView: React.FC<MapViewProps> = ({
     } else if (activeCity) {
       map.flyTo({
         center: [activeCity.lng, activeCity.lat],
-        zoom: 12.2,
+        zoom: 14.5,
+        pitch: is3DMode ? 45 : 0,
         speed: 1.0,
         essential: true,
       });
     }
-  }, [selectedSite, activeCity]);
+  }, [selectedSite, activeCity, is3DMode]);
 
-  // 5. Helper to build and sync MapLibre GeoJSON layers
-  const updateMapLayers = useCallback((map: MapLibreMap) => {
+  // 5. Setup 3D Buildings from OpenStreetMap vector planet source and application layers
+  const setup3DBuildingsAndLayers = useCallback((map: MapLibreMap) => {
     if (!map.isStyleLoaded()) return;
 
-    // --- A. ISOCHRONES LAYER ---
+    // --- A. 3D BUILDINGS VECTOR EXTRUSION ---
+    const styleLayers = map.getStyle().layers || [];
+    let labelLayerId: string | undefined;
+    for (let i = 0; i < styleLayers.length; i++) {
+      if (styleLayers[i].type === 'symbol' && styleLayers[i].layout && (styleLayers[i].layout as any)['text-field']) {
+        labelLayerId = styleLayers[i].id;
+        break;
+      }
+    }
+
+    if (!map.getSource('openfreemap')) {
+      map.addSource('openfreemap', {
+        url: 'https://tiles.openfreemap.org/planet',
+        type: 'vector',
+      });
+    }
+
+    if (!map.getLayer('3d-buildings')) {
+      map.addLayer(
+        {
+          id: '3d-buildings',
+          source: 'openfreemap',
+          'source-layer': 'building',
+          type: 'fill-extrusion',
+          minzoom: 15,
+          filter: ['!=', ['get', 'hide_3d'], true],
+          paint: {
+            'fill-extrusion-color': [
+              'interpolate',
+              ['linear'],
+              ['get', 'render_height'],
+              0,
+              'lightgray',
+              200,
+              'royalblue',
+              400,
+              'lightblue'
+            ],
+            'fill-extrusion-height': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              15,
+              0,
+              16,
+              ['get', 'render_height']
+            ],
+            'fill-extrusion-base': [
+              'case',
+              ['>=', ['get', 'zoom'], 16],
+              ['get', 'render_min_height'],
+              0
+            ],
+            'fill-extrusion-opacity': 0.9,
+          },
+        },
+        labelLayerId
+      );
+    }
+
+    // --- B. ISOCHRONES LAYER ---
     const targetSite = selectedSite || (sites.length > 0 ? sites[0] : null);
     const isochronesActive = showIsochrones && (layers.find((l) => l.id === 'isochrones')?.active ?? true);
     const isochronesOpacity = layers.find((l) => l.id === 'isochrones')?.opacity ?? 0.45;
@@ -574,7 +563,7 @@ export const MapView: React.FC<MapViewProps> = ({
       map.setLayoutProperty('isochrones-stroke', 'visibility', isochronesActive ? 'visible' : 'none');
     }
 
-    // --- B. H3 HEXAGONAL OPPORTUNITY & HOTSPOT CELLS ---
+    // --- C. H3 HEXAGONAL OPPORTUNITY CELLS ---
     const h3Active = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.active ?? true;
     const h3Opacity = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.opacity ?? 0.55;
 
@@ -639,7 +628,6 @@ export const MapView: React.FC<MapViewProps> = ({
         },
       });
 
-      // Hover tooltip on H3 Cells
       map.on('mousemove', 'h3-cells-fill', (e) => {
         if (!e.features || e.features.length === 0) return;
         map.getCanvas().style.cursor = 'pointer';
@@ -688,7 +676,7 @@ export const MapView: React.FC<MapViewProps> = ({
       map.setLayoutProperty('h3-cells-line', 'visibility', h3Active ? 'visible' : 'none');
     }
 
-    // --- C. REAL-WORLD COMPETITOR POINTS LAYER ---
+    // --- D. REAL-WORLD COMPETITOR POINTS ---
     const compActive = layers.find((l) => l.id === 'competitors' || l.id === 'competitor_nodes')?.active ?? true;
     const compFeatures = activeCompetitors.map((comp) => ({
       type: 'Feature' as const,
@@ -777,94 +765,15 @@ export const MapView: React.FC<MapViewProps> = ({
       map.setLayoutProperty('competitors-point', 'visibility', compActive ? 'visible' : 'none');
       map.setLayoutProperty('competitors-halo', 'visibility', compActive ? 'visible' : 'none');
     }
-
-    // --- D. 3D EXTRUDED BUILDINGS & CADASTRE LAYER ---
-    const buildingsActive = layers.find((l) => l.id === '3d_buildings' || l.id === 'land_use')?.active ?? true;
-    const buildingsOpacity = layers.find((l) => l.id === '3d_buildings')?.opacity ?? 0.85;
-    const centerPoint = selectedSite || (sites.length > 0 ? sites[0] : { lat: defaultCenter[1], lng: defaultCenter[0] });
-    const buildingsData = generate3DBuildingsAround(centerPoint.lat, centerPoint.lng);
-
-    const buildingsGeoJson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: buildingsData.map((b) => ({
-        type: 'Feature' as const,
-        properties: {
-          id: b.id,
-          height: b.height,
-          base: b.base,
-          color: b.color,
-          type: b.type,
-        },
-        geometry: {
-          type: 'Polygon' as const,
-          coordinates: [b.coordinates],
-        },
-      })),
-    };
-
-    if (map.getSource('3d-buildings-source')) {
-      (map.getSource('3d-buildings-source') as any).setData(buildingsGeoJson);
-    } else {
-      map.addSource('3d-buildings-source', {
-        type: 'geojson',
-        data: buildingsGeoJson,
-      });
-
-      map.addLayer({
-        id: '3d-buildings-extrusion',
-        type: 'fill-extrusion',
-        source: '3d-buildings-source',
-        paint: {
-          'fill-extrusion-color': ['get', 'color'],
-          'fill-extrusion-height': ['get', 'height'],
-          'fill-extrusion-base': ['get', 'base'],
-          'fill-extrusion-opacity': buildingsOpacity,
-          'fill-extrusion-vertical-gradient': true,
-        },
-      });
-
-      map.on('mouseenter', '3d-buildings-extrusion', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        map.getCanvas().style.cursor = 'pointer';
-        const props = e.features[0].properties;
-
-        if (!popupRef.current) {
-          popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
-        }
-
-        popupRef.current
-          .setLngLat(e.lngLat)
-          .setHTML(`
-            <div style="background:#090d1e; color:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid rgba(168,85,247,0.5); font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.6);">
-              <div style="font-weight:bold; color:#c084fc; margin-bottom:2px;">🏢 ${props.type}</div>
-              <div style="color:#94a3b8; font-size:10px; line-height:1.4;">
-                Height: <b>${props.height}m</b> • Base: <b>${props.base}m</b><br/>
-                Zoning: <b>Commercial / Mixed Use</b>
-              </div>
-            </div>
-          `)
-          .addTo(map);
-      });
-
-      map.on('mouseleave', '3d-buildings-extrusion', () => {
-        map.getCanvas().style.cursor = '';
-        if (popupRef.current) popupRef.current.remove();
-      });
-    }
-
-    if (map.getLayer('3d-buildings-extrusion')) {
-      map.setPaintProperty('3d-buildings-extrusion', 'fill-extrusion-opacity', buildingsOpacity);
-      map.setLayoutProperty('3d-buildings-extrusion', 'visibility', buildingsActive ? 'visible' : 'none');
-    }
-  }, [selectedSite, sites, showIsochrones, isochroneMode, layers, activeH3Cells, activeCompetitors, onSelectHexCell, defaultCenter]);
+  }, [selectedSite, sites, showIsochrones, isochroneMode, layers, activeH3Cells, activeCompetitors, onSelectHexCell]);
 
   // 6. Update GeoJSON layers on state changes
   useEffect(() => {
     const map = mapRef.current;
     if (map && map.isStyleLoaded()) {
-      updateMapLayers(map);
+      setup3DBuildingsAndLayers(map);
     }
-  }, [updateMapLayers]);
+  }, [setup3DBuildingsAndLayers]);
 
   // 7. Render Candidate Sites HTML Markers
   useEffect(() => {
@@ -936,9 +845,9 @@ export const MapView: React.FC<MapViewProps> = ({
     setCurrentStyle(styleKey);
     setShowStyleMenu(false);
 
-    map.setStyle(MAP_STYLES[styleKey].style as any);
+    map.setStyle(MAP_STYLES[styleKey].styleUrl as any);
     map.once('style.load', () => {
-      updateMapLayers(map);
+      setup3DBuildingsAndLayers(map);
     });
   };
 
@@ -956,7 +865,7 @@ export const MapView: React.FC<MapViewProps> = ({
     <div
       className={`relative w-full ${className} rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800/80 shadow-2xl bg-[#080d1a]`}
     >
-      {/* MapLibre Canvas Container */}
+      {/* MapLibre Vector Canvas Container */}
       <div
         ref={mapContainerRef}
         className={`w-full h-full ${toolMode === 'pin' ? 'cursor-crosshair' : toolMode === 'polygon' ? 'cursor-cell' : 'cursor-grab'}`}
@@ -965,7 +874,6 @@ export const MapView: React.FC<MapViewProps> = ({
       {/* Top Left: Interactive Drawing & Spatial Tools Toolbar */}
       <div className="absolute top-4 left-4 z-20 flex items-center gap-2 pointer-events-auto">
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/80 backdrop-blur-xl border border-white/10 text-white shadow-2xl text-xs">
-          {/* Navigate Mode */}
           <button
             onClick={() => setToolMode('navigate')}
             className={`p-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-semibold ${
@@ -977,7 +885,6 @@ export const MapView: React.FC<MapViewProps> = ({
             <span className="hidden sm:inline">Explore</span>
           </button>
 
-          {/* Pin Drop Mode */}
           <button
             onClick={() => {
               setToolMode('pin');
@@ -992,7 +899,6 @@ export const MapView: React.FC<MapViewProps> = ({
             <span className="hidden sm:inline">Drop Pin</span>
           </button>
 
-          {/* Polygon Drawing Mode */}
           <button
             onClick={() => {
               setToolMode('polygon');
@@ -1008,7 +914,6 @@ export const MapView: React.FC<MapViewProps> = ({
             <span className="hidden sm:inline">Draw Boundary</span>
           </button>
 
-          {/* Clear Drawings Button */}
           {(polygonPoints.length > 0 || inspectedSite) && (
             <button
               onClick={() => {
@@ -1033,7 +938,7 @@ export const MapView: React.FC<MapViewProps> = ({
             {selectedSite ? selectedSite.name : activeCity ? activeCity.name : 'Target Workspace'}
           </span>
           <span className="text-[10px] text-slate-400 font-mono">
-            {activeCompetitors.length} Competitors • {activeH3Cells.length} H3 Cells
+            {activeCompetitors.length} Competitors • 3D Buildings Active
           </span>
         </div>
       </div>
@@ -1052,7 +957,7 @@ export const MapView: React.FC<MapViewProps> = ({
           </button>
 
           {showStyleMenu && (
-            <div className="absolute right-0 top-12 w-44 rounded-2xl bg-[#090d1f]/95 backdrop-blur-2xl border border-indigo-500/30 p-1.5 shadow-2xl space-y-1 z-30">
+            <div className="absolute right-0 top-12 w-48 rounded-2xl bg-[#090d1f]/95 backdrop-blur-2xl border border-indigo-500/30 p-1.5 shadow-2xl space-y-1 z-30">
               {(Object.keys(MAP_STYLES) as StyleKey[]).map((key) => {
                 const item = MAP_STYLES[key];
                 const Icon = item.icon;
@@ -1086,7 +991,7 @@ export const MapView: React.FC<MapViewProps> = ({
           }`}
           title={is3DMode ? 'Switch to 2D Top-Down View' : 'Switch to 3D Isometric View'}
         >
-          <Box className={`w-4 h-4 ${is3DMode ? 'text-white animate-bounce' : 'text-purple-400'}`} />
+          <Box className={`w-4 h-4 ${is3DMode ? 'text-white' : 'text-purple-400'}`} />
           <span className="hidden sm:inline">{is3DMode ? '3D Active' : '3D View'}</span>
         </button>
 
@@ -1107,7 +1012,7 @@ export const MapView: React.FC<MapViewProps> = ({
         <button
           onClick={() => {
             if (mapRef.current) {
-              mapRef.current.flyTo({ center: defaultCenter, zoom: 12.2, pitch: 0, bearing: 0 });
+              mapRef.current.flyTo({ center: defaultCenter, zoom: 15.5, pitch: is3DMode ? 45 : 0, bearing: is3DMode ? -17.6 : 0 });
             }
           }}
           className="p-2.5 rounded-2xl bg-black/80 hover:bg-black/90 backdrop-blur-xl border border-white/10 text-slate-200 hover:text-white shadow-xl transition-all cursor-pointer"
@@ -1229,7 +1134,7 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
       )}
 
-      {/* H3 Zone Details Drawer / Popover */}
+      {/* H3 Zone Details Drawer */}
       {selectedHexZone && (
         <div className="absolute bottom-16 right-4 z-30 max-w-sm w-full p-4 rounded-3xl bg-[#090d1f]/95 backdrop-blur-2xl border border-indigo-500/40 text-white shadow-2xl animate-in slide-in-from-right">
           <div className="flex items-start justify-between mb-3">
@@ -1281,7 +1186,6 @@ export const MapView: React.FC<MapViewProps> = ({
 
       {/* Bottom Left: Live Coordinates & Legend HUD */}
       <div className="absolute bottom-4 left-4 z-20 flex flex-wrap items-center gap-2 pointer-events-none">
-        {/* Real-Time Cursor Coordinates */}
         {cursorCoords && (
           <div className="px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-mono text-slate-300 shadow-xl">
             <span>Lat: <b>{cursorCoords.lat.toFixed(4)}</b></span>
@@ -1292,7 +1196,6 @@ export const MapView: React.FC<MapViewProps> = ({
           </div>
         )}
 
-        {/* Isochrone Legend */}
         {showIsochrones && (
           <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-medium text-slate-300 shadow-xl">
             <span className="font-bold text-slate-400">Reach:</span>
