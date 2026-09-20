@@ -377,6 +377,8 @@ export const MapView: React.FC<MapViewProps> = ({
     return () => {
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
+      competitorMarkersRef.current.forEach((m) => m.remove());
+      competitorMarkersRef.current = [];
       if (tempMarkerRef.current) tempMarkerRef.current.remove();
       map.remove();
       mapRef.current = null;
@@ -790,6 +792,8 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [updateMapLayers]);
 
+  const competitorMarkersRef = useRef<Marker[]>([]);
+
   // 7. Render Candidate Sites HTML Markers
   useEffect(() => {
     const map = mapRef.current;
@@ -851,6 +855,71 @@ export const MapView: React.FC<MapViewProps> = ({
       markersRef.current.push(marker);
     });
   }, [sites, selectedSite, layers, onSelectSite]);
+
+  // 8. Render Real-World Competitor HTML Badges on Map
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    competitorMarkersRef.current.forEach((m) => m.remove());
+    competitorMarkersRef.current = [];
+
+    const compActive = layers.find((l) => l.id === 'competitors' || l.id === 'competitor_nodes')?.active ?? true;
+    if (!compActive) return;
+
+    activeCompetitors.forEach((comp) => {
+      const el = document.createElement('div');
+      el.className = 'competitor-badge-marker group cursor-pointer relative';
+      el.style.transform = 'translate(-50%, -50%)';
+
+      // Category icon
+      const iconEmoji =
+        comp.category.includes('EV') || comp.category.includes('Charg') ? '⚡' :
+        comp.category.includes('Logistics') || comp.category.includes('Warehouse') || comp.category.includes('Fulfillment') ? '📦' :
+        comp.category.includes('Tower') || comp.category.includes('Telecom') || comp.category.includes('5G') ? '🗼' :
+        comp.category.includes('Solar') ? '☀️' : '🛒';
+
+      el.innerHTML = `
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#160914]/95 border border-rose-500/70 hover:border-rose-400 shadow-xl shadow-rose-950/60 backdrop-blur-md transition-all duration-200 hover:scale-110 hover:z-30">
+          <span class="text-xs">${iconEmoji}</span>
+          <span class="text-[11px] font-bold text-rose-200 truncate max-w-[110px]">${comp.name.split(' ')[0]} ${comp.name.split(' ')[1] || ''}</span>
+          <span class="text-[9px] font-mono px-1 py-0.2 rounded bg-rose-950/80 text-rose-300 border border-rose-800/60 font-semibold">${comp.distanceKm || '1.2'}km</span>
+        </div>
+      `;
+
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!popupRef.current) {
+          popupRef.current = new Popup({ closeButton: true, closeOnClick: true });
+        }
+        popupRef.current
+          .setLngLat([comp.lng, comp.lat])
+          .setHTML(`
+            <div style="background:#090d1e; color:#f8fafc; padding:12px 14px; border-radius:14px; border:1px solid rgba(244,63,94,0.6); font-family:sans-serif; font-size:12px; box-shadow:0 15px 35px rgba(0,0,0,0.7); min-width:210px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <span style="font-weight:900; color:#fda4af; font-size:13px;">${comp.name}</span>
+                <span style="background:rgba(244,63,94,0.2); color:#fda4af; border:1px solid rgba(244,63,94,0.4); padding:2px 6px; border-radius:6px; font-size:10px; font-weight:bold;">★ ${comp.rating || 4.5}</span>
+              </div>
+              <div style="color:#94a3b8; font-size:11px; line-height:1.5; margin-bottom:8px;">
+                🏢 <b>Brand:</b> ${comp.brand}<br/>
+                🏷️ <b>Category:</b> ${comp.category}<br/>
+                📍 <b>Proximity:</b> <b style="color:#f43f5e;">${comp.distanceKm || 1.2} km</b> from candidate site
+              </div>
+              <div style="padding:4px 8px; background:rgba(244,63,94,0.15); border-radius:8px; border:1px solid rgba(244,63,94,0.3); font-size:10px; color:#fecdd3; text-align:center; font-weight:bold;">
+                ${comp.distanceKm && comp.distanceKm < 1.0 ? '🚨 Immediate Pressure Zone (< 1km)' : '⚠️ Secondary Catchment Competitor'}
+              </div>
+            </div>
+          `)
+          .addTo(map);
+      });
+
+      const marker = new Marker({ element: el })
+        .setLngLat([comp.lng, comp.lat])
+        .addTo(map);
+
+      competitorMarkersRef.current.push(marker);
+    });
+  }, [activeCompetitors, layers]);
 
   // 8. Basemap style switcher handler
   const handleStyleChange = (styleKey: StyleKey) => {
