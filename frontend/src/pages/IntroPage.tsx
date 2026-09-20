@@ -294,7 +294,7 @@ export const IntroPage: React.FC<IntroPageProps> = ({
 
       {/* FLUID SCROLL-DRIVEN SEQUENCE ANIMATION */}
       <section className="relative z-20">
-        <ScrollSequence />
+        <ScrollSequence onEnterPlatform={onEnterPlatform} onOpenAuthModal={onOpenAuthModal} />
       </section>
 
       {/* Core Architectural Capabilities Grid */}
