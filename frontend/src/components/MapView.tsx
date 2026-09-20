@@ -33,6 +33,7 @@ import {
   MapLayerConfig,
   City,
   BusinessType,
+  ARCHETYPES,
 } from '../types';
 import { LayerControl } from './LayerControl';
 import { ISOCHRONE_DATA } from '../data/mockData';
@@ -200,14 +201,6 @@ const MAP_STYLES = {
 
 type StyleKey = keyof typeof MAP_STYLES;
 type ToolMode = 'navigate' | 'pin' | 'polygon';
-
-export const ARCHETYPES: { type: BusinessType; label: string; icon: string; themeColor: string }[] = [
-  { type: 'Retail Store', label: 'Retail', icon: '🛒', themeColor: '#f43f5e' },
-  { type: 'EV Charging Station', label: 'EV Station', icon: '⚡', themeColor: '#38bdf8' },
-  { type: 'Warehouse', label: 'Warehouse', icon: '📦', themeColor: '#f59e0b' },
-  { type: 'Telecom Tower', label: '5G Telecom', icon: '🗼', themeColor: '#a855f7' },
-  { type: 'Renewable Energy', label: 'Solar / Green', icon: '☀️', themeColor: '#eab308' },
-];
 
 interface MapViewProps {
   activeCity?: City;

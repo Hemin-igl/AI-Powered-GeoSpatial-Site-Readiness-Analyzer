@@ -5,6 +5,14 @@ export type BusinessType =
   | 'Telecom Tower'
   | 'Renewable Energy';
 
+export const ARCHETYPES: { type: BusinessType; label: string; icon: string; themeColor: string }[] = [
+  { type: 'Retail Store', label: 'Retail', icon: '🛒', themeColor: '#f43f5e' },
+  { type: 'EV Charging Station', label: 'EV Station', icon: '⚡', themeColor: '#38bdf8' },
+  { type: 'Warehouse', label: 'Warehouse', icon: '📦', themeColor: '#f59e0b' },
+  { type: 'Telecom Tower', label: '5G Telecom', icon: '🗼', themeColor: '#a855f7' },
+  { type: 'Renewable Energy', label: 'Solar / Green', icon: '☀️', themeColor: '#eab308' },
+];
+
 export interface Coordinates {
   lat: number;
   lng: number;
