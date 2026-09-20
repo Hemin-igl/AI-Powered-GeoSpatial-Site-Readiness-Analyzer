@@ -112,8 +112,11 @@ export const IntroPage: React.FC<IntroPageProps> = ({
 
   return (
     <div className="min-h-screen bg-[#000000] text-slate-100 font-sans relative overflow-x-hidden selection:bg-indigo-600 selection:text-white">
+      {/* FIXED BACKGROUND 3D ANIMATION SEQUENCE */}
+      <ScrollSequence />
+
       {/* Dynamic Background Atmospheric Glowing Mesh Gradients */}
-      <div className="fixed inset-0 pointer-events-none z-0">
+      <div className="fixed inset-0 pointer-events-none z-[1]">
         {/* Top Center Spotlight */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[700px] bg-gradient-to-b from-indigo-600/20 via-purple-600/10 to-transparent blur-[160px] rounded-full" />
         
@@ -128,7 +131,7 @@ export const IntroPage: React.FC<IntroPageProps> = ({
 
         {/* High-Precision GIS Coordinate Dot Matrix */}
         <div
-          className="absolute inset-0 opacity-[0.12] pointer-events-none"
+          className="absolute inset-0 opacity-[0.10] pointer-events-none"
           style={{
             backgroundImage: `radial-gradient(circle at 1.5px 1.5px, rgba(147, 197, 253, 0.45) 1.5px, transparent 0)`,
             backgroundSize: '40px 40px',
@@ -137,7 +140,7 @@ export const IntroPage: React.FC<IntroPageProps> = ({
 
         {/* Subtle Cybernetic Scanline Grid Mask */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          className="absolute inset-0 opacity-[0.02] pointer-events-none"
           style={{
             backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.2) 1px, transparent 1px)`,
             backgroundSize: '80px 80px',
@@ -311,9 +314,42 @@ export const IntroPage: React.FC<IntroPageProps> = ({
         </div>
       </section>
 
-      {/* FLUID SCROLL-DRIVEN SEQUENCE ANIMATION */}
-      <section className="relative z-20">
-        <ScrollSequence />
+      {/* Three Spatial Processing Phases Floating Cards */}
+      <section className="relative py-12 px-6 max-w-5xl mx-auto z-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="p-6 rounded-3xl bg-[#060a16]/85 border border-indigo-500/30 backdrop-blur-xl hover:border-indigo-400/60 transition-all shadow-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/80 border border-indigo-700/60 text-indigo-300 text-[11px] font-semibold mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Phase 01</span>
+            </div>
+            <h3 className="text-base font-bold text-white mb-2">Global Mapping Ingestion</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Real-time ingestion of high-resolution census clusters, terrain elevation, transit corridors, and cadastre polygons.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-3xl bg-[#060a16]/85 border border-emerald-500/30 backdrop-blur-xl hover:border-emerald-400/60 transition-all shadow-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-[11px] font-semibold mb-3">
+              <Compass className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Phase 02</span>
+            </div>
+            <h3 className="text-base font-bold text-white mb-2">Multimodal Isochrones</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Dynamically computes 10, 20, and 30-minute drive, transit, and walking catchment polygons with population reach.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-3xl bg-[#060a16]/85 border border-purple-500/30 backdrop-blur-xl hover:border-purple-400/60 transition-all shadow-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-700/60 text-purple-300 text-[11px] font-semibold mb-3">
+              <Bot className="w-3.5 h-3.5 text-purple-400" />
+              <span>Phase 03</span>
+            </div>
+            <h3 className="text-base font-bold text-white mb-2">Deterministic AI Scoring</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Exponential competitor distance decay coupled with Getis-Ord Gi* autocorrelation for explainable 0–100 scores.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Core Architectural Capabilities Grid */}
