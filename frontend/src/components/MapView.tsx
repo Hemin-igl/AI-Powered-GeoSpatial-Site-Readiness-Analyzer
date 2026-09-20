@@ -36,8 +36,14 @@ import {
   ARCHETYPES,
 } from '../types';
 import { LayerControl } from './LayerControl';
-import { ISOCHRONE_DATA } from '../data/mockData';
-import { generateRealWorldCompetitors, generateH3GridAround, analyzeSite } from '../services/gisService';
+import {
+  generateRealWorldCompetitors,
+  generateH3GridAround,
+  generateRoadNetwork,
+  generateLandUseZoning,
+  generateRiskZones,
+  analyzeSite,
+} from '../services/gisService';
 
 const MAP_API_KEY = import.meta.env.VITE_MAP_API_KEY || 'cb1_3r5w_1_870f82872ede2321c67a7ba6';
 
@@ -421,6 +427,12 @@ export const MapView: React.FC<MapViewProps> = ({
       updateMapLayers(map);
     });
 
+    map.on('styledata', () => {
+      if (map.isStyleLoaded()) {
+        updateMapLayers(map);
+      }
+    });
+
     return () => {
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
@@ -550,156 +562,134 @@ export const MapView: React.FC<MapViewProps> = ({
   const updateMapLayers = useCallback((map: MapLibreMap) => {
     if (!map.isStyleLoaded()) return;
 
-    // --- A. ISOCHRONES LAYER ---
+    const centerLat = selectedSite ? selectedSite.lat : (sites[0]?.lat ?? defaultCenter[1]);
+    const centerLng = selectedSite ? selectedSite.lng : (sites[0]?.lng ?? defaultCenter[0]);
     const targetSite = selectedSite || (sites.length > 0 ? sites[0] : null);
-    const isochronesActive = showIsochrones && (layers.find((l) => l.id === 'isochrones')?.active ?? true);
-    const isochronesOpacity = layers.find((l) => l.id === 'isochrones')?.opacity ?? 0.45;
 
-    const isochroneFeatures = targetSite && isochronesActive
-      ? [
-          {
-            type: 'Feature' as const,
-            properties: { minutes: 30, color: '#818cf8', label: `30 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '820,000' : '110,000' },
-            geometry: {
-              type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 30, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[2]?.pathOffsets)],
-            },
-          },
-          {
-            type: 'Feature' as const,
-            properties: { minutes: 20, color: '#38bdf8', label: `20 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '385,000' : '52,000' },
-            geometry: {
-              type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 20, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[1]?.pathOffsets)],
-            },
-          },
-          {
-            type: 'Feature' as const,
-            properties: { minutes: 10, color: '#34d399', label: `10 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '142,000' : '18,500' },
-            geometry: {
-              type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 10, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[0]?.pathOffsets)],
-            },
-          },
-        ]
-      : [];
+    // --- A. LAND USE & ZONING LAYER ---
+    const landUseActive = layers.find((l) => l.id === 'land_use')?.active ?? true;
+    const landUseOpacity = layers.find((l) => l.id === 'land_use')?.opacity ?? 0.50;
+    const landUseGeoJson = generateLandUseZoning(centerLat, centerLng);
 
-    const isochronesGeoJson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: isochroneFeatures,
-    };
-
-    if (map.getSource('isochrones-source')) {
-      (map.getSource('isochrones-source') as any).setData(isochronesGeoJson);
+    if (map.getSource('land-use-source')) {
+      (map.getSource('land-use-source') as any).setData(landUseGeoJson);
     } else {
-      map.addSource('isochrones-source', {
+      map.addSource('land-use-source', {
         type: 'geojson',
-        data: isochronesGeoJson,
+        data: landUseGeoJson,
       });
 
       map.addLayer({
-        id: 'isochrones-fill',
+        id: 'land-use-fill',
         type: 'fill',
-        source: 'isochrones-source',
+        source: 'land-use-source',
         paint: {
           'fill-color': ['get', 'color'],
-          'fill-opacity': isochronesOpacity,
+          'fill-opacity': landUseOpacity,
         },
       });
 
       map.addLayer({
-        id: 'isochrones-stroke',
+        id: 'land-use-line',
         type: 'line',
-        source: 'isochrones-source',
+        source: 'land-use-source',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': 2,
+          'line-width': 1.5,
+          'line-opacity': 0.8,
+        },
+      });
+
+      map.on('mouseenter', 'land-use-fill', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const props = e.features[0].properties;
+        if (!popupRef.current) popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+        popupRef.current.setLngLat(e.lngLat).setHTML(`
+          <div style="background:#090d1f; color:#f8fafc; padding:10px 12px; border-radius:12px; border:1px solid ${props.color}; font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.7); max-width:220px;">
+            <div style="font-weight:bold; color:${props.color}; font-size:12px;">🏗️ ${props.name}</div>
+            <div style="color:#94a3b8; font-size:10px; margin-top:2px;"><b>${props.code}</b></div>
+            <div style="color:#cbd5e1; font-size:10px; margin-top:4px; line-height:1.4;">${props.desc}</div>
+          </div>
+        `).addTo(map);
+      });
+
+      map.on('mouseleave', 'land-use-fill', () => {
+        map.getCanvas().style.cursor = '';
+        if (popupRef.current) popupRef.current.remove();
+      });
+    }
+
+    if (map.getLayer('land-use-fill')) {
+      map.setPaintProperty('land-use-fill', 'fill-opacity', landUseOpacity);
+      map.setLayoutProperty('land-use-fill', 'visibility', landUseActive ? 'visible' : 'none');
+      map.setLayoutProperty('land-use-line', 'visibility', landUseActive ? 'visible' : 'none');
+    }
+
+    // --- B. ENVIRONMENTAL RISK ZONES LAYER ---
+    const riskActive = layers.find((l) => l.id === 'risk_zones')?.active ?? true;
+    const riskOpacity = layers.find((l) => l.id === 'risk_zones')?.opacity ?? 0.55;
+    const riskGeoJson = generateRiskZones(centerLat, centerLng);
+
+    if (map.getSource('risk-zones-source')) {
+      (map.getSource('risk-zones-source') as any).setData(riskGeoJson);
+    } else {
+      map.addSource('risk-zones-source', {
+        type: 'geojson',
+        data: riskGeoJson,
+      });
+
+      map.addLayer({
+        id: 'risk-zones-fill',
+        type: 'fill',
+        source: 'risk-zones-source',
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': riskOpacity,
+        },
+      });
+
+      map.addLayer({
+        id: 'risk-zones-line',
+        type: 'line',
+        source: 'risk-zones-source',
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 2.0,
+          'line-dasharray': [3, 2],
           'line-opacity': 0.9,
-          'line-dasharray': [2, 1],
-        },
-      });
-    }
-
-    if (map.getLayer('isochrones-fill')) {
-      map.setPaintProperty('isochrones-fill', 'fill-opacity', isochronesOpacity);
-      map.setLayoutProperty('isochrones-fill', 'visibility', isochronesActive ? 'visible' : 'none');
-      map.setLayoutProperty('isochrones-stroke', 'visibility', isochronesActive ? 'visible' : 'none');
-    }
-
-    // --- B. RADIAL DISTANCE BUFFER RINGS (1km, 3km, 5km) ---
-    const bufferFeatures = targetSite && showRadialBuffers
-      ? [
-          {
-            type: 'Feature' as const,
-            properties: { radius: 5, color: '#6366f1', label: '5 km Trade Area' },
-            geometry: {
-              type: 'Polygon' as const,
-              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 5)],
-            },
-          },
-          {
-            type: 'Feature' as const,
-            properties: { radius: 3, color: '#f59e0b', label: '3 km Catchment Zone' },
-            geometry: {
-              type: 'Polygon' as const,
-              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 3)],
-            },
-          },
-          {
-            type: 'Feature' as const,
-            properties: { radius: 1, color: '#f43f5e', label: '1 km Core Pressure Ring' },
-            geometry: {
-              type: 'Polygon' as const,
-              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 1)],
-            },
-          },
-        ]
-      : [];
-
-    const buffersGeoJson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: bufferFeatures,
-    };
-
-    if (map.getSource('radial-buffers-source')) {
-      (map.getSource('radial-buffers-source') as any).setData(buffersGeoJson);
-    } else {
-      map.addSource('radial-buffers-source', {
-        type: 'geojson',
-        data: buffersGeoJson,
-      });
-
-      map.addLayer({
-        id: 'radial-buffers-fill',
-        type: 'fill',
-        source: 'radial-buffers-source',
-        paint: {
-          'fill-color': ['get', 'color'],
-          'fill-opacity': 0.12,
         },
       });
 
-      map.addLayer({
-        id: 'radial-buffers-stroke',
-        type: 'line',
-        source: 'radial-buffers-source',
-        paint: {
-          'line-color': ['get', 'color'],
-          'line-width': 1.8,
-          'line-dasharray': [4, 2],
-          'line-opacity': 0.85,
-        },
+      map.on('mouseenter', 'risk-zones-fill', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const props = e.features[0].properties;
+        if (!popupRef.current) popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+        popupRef.current.setLngLat(e.lngLat).setHTML(`
+          <div style="background:#090d1f; color:#f8fafc; padding:10px 12px; border-radius:12px; border:1px solid #ef4444; font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.7); max-width:230px;">
+            <div style="font-weight:bold; color:#f87171; font-size:12px;">⚠️ Hazard: ${props.name}</div>
+            <div style="color:#fca5a5; font-size:10px; margin-top:2px;"><b>${props.severity}</b></div>
+            <div style="color:#cbd5e1; font-size:10px; margin-top:4px; line-height:1.4;">${props.desc}</div>
+          </div>
+        `).addTo(map);
+      });
+
+      map.on('mouseleave', 'risk-zones-fill', () => {
+        map.getCanvas().style.cursor = '';
+        if (popupRef.current) popupRef.current.remove();
       });
     }
 
-    if (map.getLayer('radial-buffers-fill')) {
-      map.setLayoutProperty('radial-buffers-fill', 'visibility', showRadialBuffers ? 'visible' : 'none');
-      map.setLayoutProperty('radial-buffers-stroke', 'visibility', showRadialBuffers ? 'visible' : 'none');
+    if (map.getLayer('risk-zones-fill')) {
+      map.setPaintProperty('risk-zones-fill', 'fill-opacity', riskOpacity);
+      map.setLayoutProperty('risk-zones-fill', 'visibility', riskActive ? 'visible' : 'none');
+      map.setLayoutProperty('risk-zones-line', 'visibility', riskActive ? 'visible' : 'none');
     }
 
-    // --- C. SPATIAL ALGORITHMS: H3 HEXAGONS, GETIS-ORD GI*, DBSCAN CLUSTERS ---
-    const h3Active = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.active ?? true;
-    const baseH3Opacity = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.opacity ?? 0.70;
+    // --- C. SPATIAL ALGORITHMS: H3 HEXAGONS, GETIS-ORD GI*, DBSCAN, POP DENSITY ---
+    const h3Active = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid' || l.id === 'pop_density' || l.id === 'hotspots')?.active ?? true;
+    const baseH3Opacity = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid' || l.id === 'pop_density' || l.id === 'hotspots')?.opacity ?? 0.65;
 
     const h3Features = activeH3Cells.map((cell) => {
       let fillColor = '#6366f1';
@@ -920,98 +910,214 @@ export const MapView: React.FC<MapViewProps> = ({
     if (map.getLayer('h3-cells-fill')) {
       map.setPaintProperty('h3-cells-fill', 'fill-color', ['get', 'fillColor']);
       map.setPaintProperty('h3-cells-fill', 'fill-opacity', baseH3Opacity);
-      map.setLayoutProperty('h3-cells-fill', 'visibility', 'visible');
-      map.setLayoutProperty('h3-cells-line', 'visibility', 'visible');
+      map.setLayoutProperty('h3-cells-fill', 'visibility', h3Active ? 'visible' : 'none');
+      map.setLayoutProperty('h3-cells-line', 'visibility', h3Active ? 'visible' : 'none');
     }
 
-    // --- C. REAL-WORLD COMPETITOR POINTS LAYER ---
-    const compActive = layers.find((l) => l.id === 'competitors' || l.id === 'competitor_nodes')?.active ?? true;
-    const compFeatures = activeCompetitors.map((comp) => ({
-      type: 'Feature' as const,
-      properties: {
-        id: comp.id,
-        name: comp.name,
-        brand: comp.brand,
-        category: comp.category,
-        distanceKm: comp.distanceKm || 1.2,
-        rating: comp.rating || 4.4,
-      },
-      geometry: {
-        type: 'Point' as const,
-        coordinates: [comp.lng, comp.lat],
-      },
-    }));
+    // --- D. ROAD ACCESSIBILITY & TRANSIT NETWORK LAYER ---
+    const roadsActive = layers.find((l) => l.id === 'road_access')?.active ?? true;
+    const roadsOpacity = layers.find((l) => l.id === 'road_access')?.opacity ?? 0.85;
+    const roadsGeoJson = generateRoadNetwork(centerLat, centerLng);
 
-    const compGeoJson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: compFeatures,
-    };
-
-    if (map.getSource('competitors-source')) {
-      (map.getSource('competitors-source') as any).setData(compGeoJson);
+    if (map.getSource('roads-source')) {
+      (map.getSource('roads-source') as any).setData(roadsGeoJson);
     } else {
-      map.addSource('competitors-source', {
+      map.addSource('roads-source', {
         type: 'geojson',
-        data: compGeoJson,
+        data: roadsGeoJson,
       });
 
       map.addLayer({
-        id: 'competitors-halo',
-        type: 'circle',
-        source: 'competitors-source',
+        id: 'roads-casing',
+        type: 'line',
+        source: 'roads-source',
         paint: {
-          'circle-radius': 9,
-          'circle-color': '#f43f5e',
-          'circle-opacity': 0.25,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#f43f5e',
+          'line-color': '#000000',
+          'line-width': ['+', ['get', 'width'], 2],
+          'line-opacity': 0.6,
         },
       });
 
       map.addLayer({
-        id: 'competitors-point',
-        type: 'circle',
-        source: 'competitors-source',
+        id: 'roads-line',
+        type: 'line',
+        source: 'roads-source',
         paint: {
-          'circle-radius': 5,
-          'circle-color': '#f43f5e',
-          'circle-stroke-width': 1.5,
-          'circle-stroke-color': '#ffffff',
+          'line-color': ['get', 'color'],
+          'line-width': ['get', 'width'],
+          'line-opacity': roadsOpacity,
         },
       });
 
-      map.on('mouseenter', 'competitors-point', (e) => {
+      map.on('mouseenter', 'roads-line', (e) => {
         if (!e.features || e.features.length === 0) return;
         map.getCanvas().style.cursor = 'pointer';
         const props = e.features[0].properties;
-
-        if (!popupRef.current) {
-          popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
-        }
-
-        popupRef.current
-          .setLngLat(e.lngLat)
-          .setHTML(`
-            <div style="background:#090d1e; color:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid rgba(244,63,94,0.5); font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.6);">
-              <div style="font-weight:bold; color:#fda4af; margin-bottom:2px;">${props.name}</div>
-              <div style="color:#94a3b8; font-size:10px; line-height:1.4;">
-                🏢 <b>${props.brand}</b> • ${props.category}<br/>
-                📍 Distance: <b>${props.distanceKm} km</b> • ★ <b>${props.rating}</b>
-              </div>
-            </div>
-          `)
-          .addTo(map);
+        if (!popupRef.current) popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+        popupRef.current.setLngLat(e.lngLat).setHTML(`
+          <div style="background:#090d1f; color:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid #38bdf8; font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.7);">
+            <div style="font-weight:bold; color:#38bdf8;">🛣️ ${props.name}</div>
+            <div style="color:#94a3b8; font-size:10px; margin-top:2px;">Classification: <b>${props.type}</b> • Speed: <b>${props.speedLimitKmh} km/h</b> • ${props.lanes} Lanes</div>
+          </div>
+        `).addTo(map);
       });
 
-      map.on('mouseleave', 'competitors-point', () => {
+      map.on('mouseleave', 'roads-line', () => {
         map.getCanvas().style.cursor = '';
         if (popupRef.current) popupRef.current.remove();
       });
     }
 
-    if (map.getLayer('competitors-point')) {
-      map.setLayoutProperty('competitors-point', 'visibility', 'none');
-      map.setLayoutProperty('competitors-halo', 'visibility', 'none');
+    if (map.getLayer('roads-line')) {
+      map.setPaintProperty('roads-line', 'line-opacity', roadsOpacity);
+      map.setLayoutProperty('roads-line', 'visibility', roadsActive ? 'visible' : 'none');
+      map.setLayoutProperty('roads-casing', 'visibility', roadsActive ? 'visible' : 'none');
+    }
+
+    // --- E. ISOCHRONES LAYER ---
+    const isochronesActive = showIsochrones && (layers.find((l) => l.id === 'isochrones')?.active ?? true);
+    const isochronesOpacity = layers.find((l) => l.id === 'isochrones')?.opacity ?? 0.45;
+
+    const isochroneFeatures = targetSite && isochronesActive
+      ? [
+          {
+            type: 'Feature' as const,
+            properties: { minutes: 30, color: '#818cf8', label: `30 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '820,000' : '110,000' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 30, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[2]?.pathOffsets)],
+            },
+          },
+          {
+            type: 'Feature' as const,
+            properties: { minutes: 20, color: '#38bdf8', label: `20 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '385,000' : '52,000' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 20, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[1]?.pathOffsets)],
+            },
+          },
+          {
+            type: 'Feature' as const,
+            properties: { minutes: 10, color: '#34d399', label: `10 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '142,000' : '18,500' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 10, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[0]?.pathOffsets)],
+            },
+          },
+        ]
+      : [];
+
+    const isochronesGeoJson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: isochroneFeatures,
+    };
+
+    if (map.getSource('isochrones-source')) {
+      (map.getSource('isochrones-source') as any).setData(isochronesGeoJson);
+    } else {
+      map.addSource('isochrones-source', {
+        type: 'geojson',
+        data: isochronesGeoJson,
+      });
+
+      map.addLayer({
+        id: 'isochrones-fill',
+        type: 'fill',
+        source: 'isochrones-source',
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': isochronesOpacity,
+        },
+      });
+
+      map.addLayer({
+        id: 'isochrones-stroke',
+        type: 'line',
+        source: 'isochrones-source',
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 2,
+          'line-opacity': 0.9,
+          'line-dasharray': [2, 1],
+        },
+      });
+    }
+
+    if (map.getLayer('isochrones-fill')) {
+      map.setPaintProperty('isochrones-fill', 'fill-opacity', isochronesOpacity);
+      map.setLayoutProperty('isochrones-fill', 'visibility', isochronesActive ? 'visible' : 'none');
+      map.setLayoutProperty('isochrones-stroke', 'visibility', isochronesActive ? 'visible' : 'none');
+    }
+
+    // --- F. RADIAL DISTANCE BUFFER RINGS (1km, 3km, 5km) ---
+    const bufferFeatures = targetSite && showRadialBuffers
+      ? [
+          {
+            type: 'Feature' as const,
+            properties: { radius: 5, color: '#6366f1', label: '5 km Trade Area' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 5)],
+            },
+          },
+          {
+            type: 'Feature' as const,
+            properties: { radius: 3, color: '#f59e0b', label: '3 km Catchment Zone' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 3)],
+            },
+          },
+          {
+            type: 'Feature' as const,
+            properties: { radius: 1, color: '#f43f5e', label: '1 km Core Pressure Ring' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 1)],
+            },
+          },
+        ]
+      : [];
+
+    const buffersGeoJson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: bufferFeatures,
+    };
+
+    if (map.getSource('radial-buffers-source')) {
+      (map.getSource('radial-buffers-source') as any).setData(buffersGeoJson);
+    } else {
+      map.addSource('radial-buffers-source', {
+        type: 'geojson',
+        data: buffersGeoJson,
+      });
+
+      map.addLayer({
+        id: 'radial-buffers-fill',
+        type: 'fill',
+        source: 'radial-buffers-source',
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': 0.12,
+        },
+      });
+
+      map.addLayer({
+        id: 'radial-buffers-stroke',
+        type: 'line',
+        source: 'radial-buffers-source',
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 1.8,
+          'line-dasharray': [4, 2],
+          'line-opacity': 0.85,
+        },
+      });
+    }
+
+    if (map.getLayer('radial-buffers-fill')) {
+      map.setLayoutProperty('radial-buffers-fill', 'visibility', showRadialBuffers ? 'visible' : 'none');
+      map.setLayoutProperty('radial-buffers-stroke', 'visibility', showRadialBuffers ? 'visible' : 'none');
     }
   }, [
     selectedSite,
@@ -1024,9 +1130,10 @@ export const MapView: React.FC<MapViewProps> = ({
     activeH3Cells,
     activeCompetitors,
     onSelectHexCell,
+    defaultCenter,
   ]);
 
-  // 6. Update GeoJSON layers on state changes
+  // 6. Update GeoJSON layers on state changes and listen to style changes
   useEffect(() => {
     const map = mapRef.current;
     if (map && map.isStyleLoaded()) {
@@ -1210,9 +1317,6 @@ export const MapView: React.FC<MapViewProps> = ({
     setShowStyleMenu(false);
 
     map.setStyle(MAP_STYLES[styleKey].style as any);
-    map.once('style.load', () => {
-      updateMapLayers(map);
-    });
   };
 
   // 9. Fullscreen toggle

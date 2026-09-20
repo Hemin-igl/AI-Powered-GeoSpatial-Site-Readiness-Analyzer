@@ -303,6 +303,236 @@ export function generateH3GridAround(centerLat: number, centerLng: number): H3Ce
   return cells;
 }
 
+/**
+ * Generates vector arterial road and highway networks across the study area
+ */
+export function generateRoadNetwork(centerLat: number, centerLng: number): GeoJSON.FeatureCollection {
+  const radLat = (centerLat * Math.PI) / 180;
+  const cosLat = Math.cos(radLat);
+  const toCoords = (dKmX: number, dKmY: number): [number, number] => [
+    Number((centerLng + dKmX / (111.32 * cosLat)).toFixed(5)),
+    Number((centerLat + dKmY / 111.32).toFixed(5)),
+  ];
+
+  // Helper to make smooth ring line
+  const makeRingLine = (rKm: number, numPts: number = 36): [number, number][] => {
+    const pts: [number, number][] = [];
+    for (let i = 0; i <= numPts; i++) {
+      const a = (2 * Math.PI * i) / numPts;
+      pts.push(toCoords(rKm * Math.cos(a), rKm * Math.sin(a)));
+    }
+    return pts;
+  };
+
+  const features: GeoJSON.Feature[] = [
+    // 1. Outer Ring Expressway (8.5 km radius)
+    {
+      type: 'Feature',
+      properties: { name: 'Outer Orbital Expressway', type: 'Expressway', speedLimitKmh: 100, lanes: 8, color: '#00f2fe', width: 4.0 },
+      geometry: { type: 'LineString', coordinates: makeRingLine(8.5, 48) },
+    },
+    // 2. Mid-City Arterial Ring (4.2 km radius)
+    {
+      type: 'Feature',
+      properties: { name: 'Inner Ring Commercial Boulevard', type: 'Arterial', speedLimitKmh: 60, lanes: 6, color: '#38bdf8', width: 3.2 },
+      geometry: { type: 'LineString', coordinates: makeRingLine(4.2, 36) },
+    },
+    // 3. National North-South Highway Spine
+    {
+      type: 'Feature',
+      properties: { name: 'National Highway 48 Feeder Corridor', type: 'Expressway', speedLimitKmh: 90, lanes: 6, color: '#00f2fe', width: 4.0 },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          toCoords(-1.5, 12.0),
+          toCoords(-0.8, 7.5),
+          toCoords(0.2, 3.0),
+          toCoords(0.0, 0.0),
+          toCoords(0.5, -4.5),
+          toCoords(1.8, -9.0),
+          toCoords(2.5, -13.0),
+        ],
+      },
+    },
+    // 4. East-West High-Speed Transit Arterial
+    {
+      type: 'Feature',
+      properties: { name: 'East-West Regional Bypass', type: 'Arterial', speedLimitKmh: 70, lanes: 6, color: '#38bdf8', width: 3.0 },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          toCoords(-12.0, -1.0),
+          toCoords(-6.5, -0.4),
+          toCoords(0.0, 0.0),
+          toCoords(5.8, 0.8),
+          toCoords(11.5, 1.4),
+        ],
+      },
+    },
+    // 5. Northeast Tech Radial Corridor
+    {
+      type: 'Feature',
+      properties: { name: 'Northeast Tech Radial Expressway', type: 'Arterial', speedLimitKmh: 75, lanes: 6, color: '#818cf8', width: 3.0 },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          toCoords(0.0, 0.0),
+          toCoords(2.8, 3.2),
+          toCoords(6.5, 7.2),
+          toCoords(10.2, 11.0),
+        ],
+      },
+    },
+    // 6. Southwest Port & Airport Feeder
+    {
+      type: 'Feature',
+      properties: { name: 'Southwest Freight & Airport Feeder', type: 'Arterial', speedLimitKmh: 80, lanes: 6, color: '#818cf8', width: 3.0 },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          toCoords(0.0, 0.0),
+          toCoords(-3.2, -2.8),
+          toCoords(-7.5, -6.4),
+          toCoords(-11.0, -9.8),
+        ],
+      },
+    },
+  ];
+
+  return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Generates municipal land use and zoning parcels across the study area
+ */
+export function generateLandUseZoning(centerLat: number, centerLng: number): GeoJSON.FeatureCollection {
+  const radLat = (centerLat * Math.PI) / 180;
+  const cosLat = Math.cos(radLat);
+  const toCoords = (dKmX: number, dKmY: number): [number, number] => [
+    Number((centerLng + dKmX / (111.32 * cosLat)).toFixed(5)),
+    Number((centerLat + dKmY / 111.32).toFixed(5)),
+  ];
+
+  const makeBox = (minX: number, minY: number, maxX: number, maxY: number): [number, number][] => [
+    toCoords(minX, minY),
+    toCoords(maxX, minY),
+    toCoords(maxX, maxY),
+    toCoords(minX, maxY),
+    toCoords(minX, minY),
+  ];
+
+  const features: GeoJSON.Feature[] = [
+    // Central Commercial CBD
+    {
+      type: 'Feature',
+      properties: { name: 'Central Business District (CBD)', code: 'C-1 High Density Commercial', color: '#a855f7', opacity: 0.50, desc: 'High-intensity retail, corporate headquarters, and multi-story commercial plazas.' },
+      geometry: { type: 'Polygon', coordinates: [makeBox(-1.8, -1.8, 1.8, 1.8)] },
+    },
+    // Northeast High-Tech & IT Zone
+    {
+      type: 'Feature',
+      properties: { name: 'Silicon Tech & Innovation Park', code: 'IT-2 Tech SEZ', color: '#6366f1', opacity: 0.45, desc: 'Enterprise software campuses, data centers, and advanced technology hubs.' },
+      geometry: { type: 'Polygon', coordinates: [makeBox(2.2, 1.5, 6.8, 5.8)] },
+    },
+    // Southeast Industrial & Logistics Mega-Park
+    {
+      type: 'Feature',
+      properties: { name: 'South Freight & Logistics Hub', code: 'I-3 Heavy Logistics Park', color: '#f59e0b', opacity: 0.45, desc: 'Warehouses, 3PL fulfillment centers, cold storage, and container depots.' },
+      geometry: { type: 'Polygon', coordinates: [makeBox(2.0, -6.5, 7.5, -2.2)] },
+    },
+    // West Mixed-Use High-Street Corridor
+    {
+      type: 'Feature',
+      properties: { name: 'West End Mixed-Use Boulevard', code: 'MU-4 Commercial Mixed', color: '#ec4899', opacity: 0.45, desc: 'Ground-floor retail, premium dining, multiplexes, and urban apartments.' },
+      geometry: { type: 'Polygon', coordinates: [makeBox(-6.0, -2.5, -2.2, 2.5)] },
+    },
+    // North Master-Planned Residential Sectors
+    {
+      type: 'Feature',
+      properties: { name: 'North Gated Residential Township', code: 'R-1 Master Residential', color: '#10b981', opacity: 0.35, desc: 'High-density residential towers, community parks, and neighborhood retail.' },
+      geometry: { type: 'Polygon', coordinates: [makeBox(-4.0, 2.2, 1.8, 7.2)] },
+    },
+    // Southwest Institutional Belt
+    {
+      type: 'Feature',
+      properties: { name: 'Southwest Institutional & University Belt', code: 'INS-2 Institutional', color: '#06b6d4', opacity: 0.40, desc: 'University campuses, research institutes, hospitals, and civic grounds.' },
+      geometry: { type: 'Polygon', coordinates: [makeBox(-6.5, -6.8, -1.5, -2.8)] },
+    },
+  ];
+
+  return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Generates environmental, flood, and operational risk hazard zones
+ */
+export function generateRiskZones(centerLat: number, centerLng: number): GeoJSON.FeatureCollection {
+  const radLat = (centerLat * Math.PI) / 180;
+  const cosLat = Math.cos(radLat);
+  const toCoords = (dKmX: number, dKmY: number): [number, number] => [
+    Number((centerLng + dKmX / (111.32 * cosLat)).toFixed(5)),
+    Number((centerLat + dKmY / 111.32).toFixed(5)),
+  ];
+
+  const features: GeoJSON.Feature[] = [
+    // River Flood Inundation Buffer (100-Year High Risk Basin)
+    {
+      type: 'Feature',
+      properties: { name: 'River Tapi Flood Inundation Plain', severity: 'High Risk (100-Yr Return)', color: '#ef4444', desc: '100-year flood zone buffer requiring mandatory 1.5m plinth elevation and hydraulic clearance.' },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          toCoords(-8.5, 3.2),
+          toCoords(-5.2, 2.8),
+          toCoords(-2.0, 1.4),
+          toCoords(1.2, 0.2),
+          toCoords(4.8, -1.2),
+          toCoords(8.2, -3.0),
+          toCoords(7.8, -4.2),
+          toCoords(4.2, -2.6),
+          toCoords(0.8, -1.2),
+          toCoords(-2.4, 0.0),
+          toCoords(-5.8, 1.4),
+          toCoords(-8.8, 1.8),
+          toCoords(-8.5, 3.2),
+        ]],
+      },
+    },
+    // Low-Lying Coastal / Wetland Storm Buffer
+    {
+      type: 'Feature',
+      properties: { name: 'Estuary Storm Surge & Marsh Buffer', severity: 'Medium Risk Buffer', color: '#f97316', desc: 'Coastal marshland with high soil liquefaction and seasonal monsoon waterlogging.' },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          toCoords(-9.5, -4.5),
+          toCoords(-7.0, -5.2),
+          toCoords(-6.8, -9.0),
+          toCoords(-10.2, -9.2),
+          toCoords(-9.5, -4.5),
+        ]],
+      },
+    },
+    // High Voltage Grid Transmission Setback
+    {
+      type: 'Feature',
+      properties: { name: '400kV High-Voltage Corridor Setback', severity: 'Infrastructure Hazard Setback', color: '#eab308', desc: 'Mandatory 45-meter non-construction safety buffer beneath high-voltage transmission lines.' },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          toCoords(6.5, 7.8),
+          toCoords(7.0, 7.6),
+          toCoords(8.2, -6.5),
+          toCoords(7.7, -6.7),
+          toCoords(6.5, 7.8),
+        ]],
+      },
+    },
+  ];
+
+  return { type: 'FeatureCollection', features };
+}
+
 const workspaceData = CITY_DATA.workspace || { candidateSites: [], competitors: [], h3Cells: [] };
 const CANDIDATE_SITES = workspaceData.candidateSites || [];
 const COMPETITOR_POINTS = workspaceData.competitors || [];
