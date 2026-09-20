@@ -81,6 +81,10 @@ export interface CompetitorPoint {
   category: string;
   distanceKm?: number;
   rating?: number;
+  reviewsCount?: number;
+  status?: string;
+  address?: string;
+  commercialType?: string;
 }
 
 export interface IsochroneLevel {

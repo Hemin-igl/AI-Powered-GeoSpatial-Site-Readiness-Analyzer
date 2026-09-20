@@ -201,6 +201,14 @@ const MAP_STYLES = {
 type StyleKey = keyof typeof MAP_STYLES;
 type ToolMode = 'navigate' | 'pin' | 'polygon';
 
+export const ARCHETYPES: { type: BusinessType; label: string; icon: string; themeColor: string }[] = [
+  { type: 'Retail Store', label: 'Retail', icon: '🛒', themeColor: '#f43f5e' },
+  { type: 'EV Charging Station', label: 'EV Station', icon: '⚡', themeColor: '#38bdf8' },
+  { type: 'Warehouse', label: 'Warehouse', icon: '📦', themeColor: '#f59e0b' },
+  { type: 'Telecom Tower', label: '5G Telecom', icon: '🗼', themeColor: '#a855f7' },
+  { type: 'Renewable Energy', label: 'Solar / Green', icon: '☀️', themeColor: '#eab308' },
+];
+
 interface MapViewProps {
   activeCity?: City;
   sites: CandidateSite[];
@@ -324,6 +332,18 @@ export const MapView: React.FC<MapViewProps> = ({
   const [isEvaluatingPoint, setIsEvaluatingPoint] = useState(false);
   const [selectedHexZone, setSelectedHexZone] = useState<H3CellData | null>(null);
 
+  // Business Archetype for Competitors Across Entire Map
+  const [selectedArchetype, setSelectedArchetype] = useState<BusinessType>(
+    selectedSite?.businessType || 'Retail Store'
+  );
+
+  // Sync selectedArchetype when selected candidate site changes
+  useEffect(() => {
+    if (selectedSite?.businessType) {
+      setSelectedArchetype(selectedSite.businessType);
+    }
+  }, [selectedSite?.businessType]);
+
   // Compute active focus coordinates
   const defaultCenter = useMemo<[number, number]>(() => {
     if (selectedSite) return [selectedSite.lng, selectedSite.lat];
@@ -332,12 +352,12 @@ export const MapView: React.FC<MapViewProps> = ({
     return [72.8311, 21.1702];
   }, [selectedSite, activeCity, sites]);
 
-  // Merge real-world competitors around active site / coordinates if array is empty
+  // Generate real-world commercial competitors across the whole map for the selected archetype
   const activeCompetitors = useMemo<CompetitorPoint[]>(() => {
-    if (competitors.length > 0) return competitors;
-    const center = selectedSite || (sites.length > 0 ? sites[0] : { lat: defaultCenter[1], lng: defaultCenter[0], businessType: 'Retail Store' as BusinessType });
-    return generateRealWorldCompetitors(center.lat, center.lng, center.businessType || 'Retail Store');
-  }, [competitors, selectedSite, sites, defaultCenter]);
+    const centerLat = selectedSite ? selectedSite.lat : (sites[0]?.lat ?? defaultCenter[1]);
+    const centerLng = selectedSite ? selectedSite.lng : (sites[0]?.lng ?? defaultCenter[0]);
+    return generateRealWorldCompetitors(centerLat, centerLng, selectedArchetype);
+  }, [selectedSite, sites, defaultCenter, selectedArchetype]);
 
   // Merge dynamic H3 grid if array is empty
   const activeH3Cells = useMemo<H3CellData[]>(() => {
@@ -872,18 +892,25 @@ export const MapView: React.FC<MapViewProps> = ({
       el.className = 'competitor-badge-marker group cursor-pointer relative';
       el.style.transform = 'translate(-50%, -50%)';
 
-      // Category icon
-      const iconEmoji =
-        comp.category.includes('EV') || comp.category.includes('Charg') ? '⚡' :
-        comp.category.includes('Logistics') || comp.category.includes('Warehouse') || comp.category.includes('Fulfillment') ? '📦' :
-        comp.category.includes('Tower') || comp.category.includes('Telecom') || comp.category.includes('5G') ? '🗼' :
-        comp.category.includes('Solar') ? '☀️' : '🛒';
+      // Category icon & accent color
+      const isEV = comp.category.includes('EV') || comp.category.includes('Charg') || selectedArchetype === 'EV Charging Station';
+      const isWarehouse = comp.category.includes('Logistics') || comp.category.includes('Warehouse') || comp.category.includes('Fulfillment') || selectedArchetype === 'Warehouse';
+      const isTelecom = comp.category.includes('Tower') || comp.category.includes('Telecom') || comp.category.includes('5G') || selectedArchetype === 'Telecom Tower';
+      const isSolar = comp.category.includes('Solar') || comp.category.includes('Renewable') || selectedArchetype === 'Renewable Energy';
+
+      const iconEmoji = isEV ? '⚡' : isWarehouse ? '📦' : isTelecom ? '🗼' : isSolar ? '☀️' : '🛒';
+      const themeColor = isEV ? '#38bdf8' : isWarehouse ? '#f59e0b' : isTelecom ? '#a855f7' : isSolar ? '#eab308' : '#f43f5e';
+      const borderColor = isEV ? 'border-sky-500/80' : isWarehouse ? 'border-amber-500/80' : isTelecom ? 'border-purple-500/80' : isSolar ? 'border-yellow-500/80' : 'border-rose-500/80';
+      const bgBadge = isEV ? 'bg-sky-950/90 text-sky-200' : isWarehouse ? 'bg-amber-950/90 text-amber-200' : isTelecom ? 'bg-purple-950/90 text-purple-200' : isSolar ? 'bg-yellow-950/90 text-yellow-200' : 'bg-rose-950/90 text-rose-200';
 
       el.innerHTML = `
-        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#160914]/95 border border-rose-500/70 hover:border-rose-400 shadow-xl shadow-rose-950/60 backdrop-blur-md transition-all duration-200 hover:scale-110 hover:z-30">
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#0b0f19]/95 border ${borderColor} hover:scale-110 shadow-2xl backdrop-blur-md transition-all duration-200 hover:z-40">
           <span class="text-xs">${iconEmoji}</span>
-          <span class="text-[11px] font-bold text-rose-200 truncate max-w-[110px]">${comp.name.split(' ')[0]} ${comp.name.split(' ')[1] || ''}</span>
-          <span class="text-[9px] font-mono px-1 py-0.2 rounded bg-rose-950/80 text-rose-300 border border-rose-800/60 font-semibold">${comp.distanceKm || '1.2'}km</span>
+          <div class="flex flex-col">
+            <span class="text-[11px] font-bold text-white truncate max-w-[120px] leading-tight">${comp.name.split(' ')[0]} ${comp.name.split(' ')[1] || ''}</span>
+            <span class="text-[9px] text-slate-400 font-medium truncate max-w-[120px]">${comp.commercialType || comp.brand}</span>
+          </div>
+          <span class="text-[9px] font-mono px-1.5 py-0.5 rounded-md ${bgBadge} border border-white/10 font-bold ml-0.5">${comp.distanceKm || '1.2'}km</span>
         </div>
       `;
 
@@ -892,21 +919,44 @@ export const MapView: React.FC<MapViewProps> = ({
         if (!popupRef.current) {
           popupRef.current = new Popup({ closeButton: true, closeOnClick: true });
         }
+
+        const statusTag = comp.status || 'Open • Operational';
+        const reviewsFormatted = comp.reviewsCount ? comp.reviewsCount.toLocaleString() : '1,240';
+        const addressText = comp.address || 'Commercial Sector Corridor';
+        const commercialType = comp.commercialType || comp.category;
+
         popupRef.current
           .setLngLat([comp.lng, comp.lat])
           .setHTML(`
-            <div style="background:#090d1e; color:#f8fafc; padding:12px 14px; border-radius:14px; border:1px solid rgba(244,63,94,0.6); font-family:sans-serif; font-size:12px; box-shadow:0 15px 35px rgba(0,0,0,0.7); min-width:210px;">
-              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-                <span style="font-weight:900; color:#fda4af; font-size:13px;">${comp.name}</span>
-                <span style="background:rgba(244,63,94,0.2); color:#fda4af; border:1px solid rgba(244,63,94,0.4); padding:2px 6px; border-radius:6px; font-size:10px; font-weight:bold;">★ ${comp.rating || 4.5}</span>
+            <div style="background:#090d1f; color:#f8fafc; padding:14px; border-radius:16px; border:1px solid ${themeColor}; font-family:sans-serif; font-size:12px; box-shadow:0 20px 40px rgba(0,0,0,0.8); min-width:240px; max-width:280px;">
+              <!-- Header Banner -->
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-size:16px;">${iconEmoji}</span>
+                  <span style="font-size:10px; font-weight:800; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">${selectedArchetype}</span>
+                </div>
+                <span style="background:rgba(255,255,255,0.08); color:#fef08a; border:1px solid rgba(254,240,138,0.3); padding:2px 7px; border-radius:8px; font-size:11px; font-weight:bold; display:flex; align-items:center; gap:3px;">
+                  ★ ${comp.rating || 4.5} <span style="color:#94a3b8; font-size:9px; font-weight:normal;">(${reviewsFormatted})</span>
+                </span>
               </div>
-              <div style="color:#94a3b8; font-size:11px; line-height:1.5; margin-bottom:8px;">
-                🏢 <b>Brand:</b> ${comp.brand}<br/>
-                🏷️ <b>Category:</b> ${comp.category}<br/>
-                📍 <b>Proximity:</b> <b style="color:#f43f5e;">${comp.distanceKm || 1.2} km</b> from candidate site
+
+              <!-- Name & Type -->
+              <div style="font-weight:900; color:#ffffff; font-size:13px; line-height:1.3; margin-bottom:2px;">${comp.name}</div>
+              <div style="color:#94a3b8; font-size:10px; font-weight:600; margin-bottom:8px;">${commercialType} • <b>${comp.brand}</b></div>
+
+              <!-- Live Status & Address -->
+              <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:10px; font-size:11px; line-height:1.5;">
+                <div style="color:#34d399; font-weight:bold; font-size:10px; margin-bottom:3px; display:flex; align-items:center; gap:5px;">
+                  <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+                  ${statusTag}
+                </div>
+                <div style="color:#cbd5e1; font-size:10px;">📍 <b>Area:</b> ${addressText}</div>
+                <div style="color:#cbd5e1; font-size:10px;">📏 <b>Proximity:</b> <b style="color:${themeColor};">${comp.distanceKm || 1.2} km</b> from candidate site</div>
               </div>
-              <div style="padding:4px 8px; background:rgba(244,63,94,0.15); border-radius:8px; border:1px solid rgba(244,63,94,0.3); font-size:10px; color:#fecdd3; text-align:center; font-weight:bold;">
-                ${comp.distanceKm && comp.distanceKm < 1.0 ? '🚨 Immediate Pressure Zone (< 1km)' : '⚠️ Secondary Catchment Competitor'}
+
+              <!-- Catchment Level Badge -->
+              <div style="padding:4px 8px; background:${themeColor}22; border-radius:8px; border:1px solid ${themeColor}55; font-size:10px; color:#ffffff; text-align:center; font-weight:bold;">
+                ${comp.distanceKm && comp.distanceKm < 2.0 ? '🚨 Core Catchment Competitor (< 2km)' : comp.distanceKm && comp.distanceKm < 7.0 ? '⚡ Mid-City Commercial Node' : '🌐 Outer Regional Corridor Hub'}
               </div>
             </div>
           `)
@@ -919,7 +969,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
       competitorMarkersRef.current.push(marker);
     });
-  }, [activeCompetitors, layers]);
+  }, [activeCompetitors, layers, selectedArchetype]);
 
   // 8. Basemap style switcher handler
   const handleStyleChange = (styleKey: StyleKey) => {
@@ -1026,9 +1076,34 @@ export const MapView: React.FC<MapViewProps> = ({
             {selectedSite ? selectedSite.name : activeCity ? activeCity.name : 'Target Workspace'}
           </span>
           <span className="text-[10px] text-slate-400 font-mono">
-            {activeCompetitors.length} Competitors • {activeH3Cells.length} H3 Cells
+            {activeCompetitors.length} Commercial Sites Across Whole Map
           </span>
         </div>
+      </div>
+
+      {/* Archetype Filter Toolbar (Switch Competitors Across Whole Map) */}
+      <div className="absolute top-16 left-4 z-20 flex items-center gap-1 p-1 rounded-2xl bg-black/85 backdrop-blur-xl border border-white/10 text-white shadow-2xl text-xs pointer-events-auto overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-none">
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 hidden sm:inline">
+          Archetype:
+        </span>
+        {ARCHETYPES.map((arch) => {
+          const isActive = selectedArchetype === arch.type;
+          return (
+            <button
+              key={arch.type}
+              onClick={() => setSelectedArchetype(arch.type)}
+              className={`px-2.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap ${
+                isActive
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30 scale-102 ring-1 ring-white/20 font-bold'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+              }`}
+              title={`Show all ${arch.type} commercial sites & competitor network across the whole map`}
+            >
+              <span>{arch.icon}</span>
+              <span>{arch.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Top Right: Controls HUD */}

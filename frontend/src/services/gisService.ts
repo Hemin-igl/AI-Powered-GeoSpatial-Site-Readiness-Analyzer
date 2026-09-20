@@ -13,50 +13,126 @@ import {
   ScoringWeights,
 } from '../types';
 
-// Real-world competitor brand datasets by business archetype
-export const REAL_WORLD_COMPETITORS_BY_TYPE: Record<BusinessType, { name: string; brand: string; category: string; rating: number; radiusOffsetKm: number; angleDeg: number }[]> = {
+// Real-world commercial sites & competitor brand datasets across the whole map extent by archetype
+// Real-world commercial sites & competitor brand datasets across the whole map extent by archetype
+export const REAL_WORLD_COMPETITORS_BY_TYPE: Record<BusinessType, {
+  name: string;
+  brand: string;
+  category: string;
+  commercialType: string;
+  rating: number;
+  reviewsCount: number;
+  status: string;
+  radiusOffsetKm: number;
+  angleDeg: number;
+  areaDesc: string;
+}[]> = {
   'Retail Store': [
-    { name: 'Reliance Smart Bazaar', brand: 'Reliance Retail', category: 'Hypermarket & Grocery', rating: 4.4, radiusOffsetKm: 0.8, angleDeg: 35 },
-    { name: 'D-Mart Supercenter', brand: 'Avenue Supermarts', category: 'Discount Retail & Supermarket', rating: 4.7, radiusOffsetKm: 1.4, angleDeg: 120 },
-    { name: 'Starbucks Coffee & Drive-Thru', brand: 'Tata Starbucks', category: 'Specialty Cafe & QSR', rating: 4.5, radiusOffsetKm: 0.6, angleDeg: 210 },
-    { name: 'Croma Mega Electronics', brand: 'Tata Digital', category: 'Consumer Electronics & Appliances', rating: 4.3, radiusOffsetKm: 1.9, angleDeg: 295 },
-    { name: 'Zudio Fast Fashion', brand: 'Trent Ltd', category: 'Apparel & Department Store', rating: 4.2, radiusOffsetKm: 1.1, angleDeg: 75 },
-    { name: 'Decathlon Sports Hub', brand: 'Decathlon', category: 'Sporting Goods Mega-Store', rating: 4.8, radiusOffsetKm: 2.8, angleDeg: 165 },
-    { name: 'Westside Flagship', brand: 'Trent Ltd', category: 'Fashion & Lifestyle Retail', rating: 4.4, radiusOffsetKm: 2.1, angleDeg: 340 },
-    { name: 'McDonald’s Drive-Thru', brand: 'McDonald’s', category: 'Quick Service Restaurant', rating: 4.2, radiusOffsetKm: 0.5, angleDeg: 15 },
-    { name: 'Apple Premium Reseller (Unicorn)', brand: 'Apple Authorized', category: 'Premium Technology Retail', rating: 4.9, radiusOffsetKm: 1.5, angleDeg: 190 },
-    { name: 'Shoppers Stop Lifestyle Mall', brand: 'Shoppers Stop', category: 'Department Store & Cosmetics', rating: 4.3, radiusOffsetKm: 3.2, angleDeg: 260 },
+    // Core & Downtown Commercial Hub (0.4km - 2km)
+    { name: 'Reliance Smart Bazaar', brand: 'Reliance Retail', category: 'Hypermarket & Grocery', commercialType: 'Anchor Hypermarket', rating: 4.4, reviewsCount: 3840, status: 'Open • Closes 10:30 PM', radiusOffsetKm: 0.8, angleDeg: 35, areaDesc: 'Central Market Corridor' },
+    { name: 'D-Mart Supercenter', brand: 'Avenue Supermarts', category: 'Discount Retail & Grocery', commercialType: 'Mega Superstore', rating: 4.7, reviewsCount: 8920, status: 'Open • Closes 11 PM', radiusOffsetKm: 1.4, angleDeg: 120, areaDesc: 'South Arterial Road' },
+    { name: 'Starbucks Reserve & Cafe', brand: 'Tata Starbucks', category: 'Specialty Coffee & QSR', commercialType: 'High-Street Flagship', rating: 4.6, reviewsCount: 2410, status: 'Open • Closes 11:30 PM', radiusOffsetKm: 0.6, angleDeg: 210, areaDesc: 'Main High Street' },
+    { name: 'Croma Mega Tech Store', brand: 'Tata Digital', category: 'Consumer Electronics & Gadgets', commercialType: 'Electronics Superstore', rating: 4.3, reviewsCount: 1950, status: 'Open • Closes 9:30 PM', radiusOffsetKm: 1.9, angleDeg: 295, areaDesc: 'West Commercial Plaza' },
+    { name: 'Zudio Fast Fashion', brand: 'Trent Ltd', category: 'Apparel & Department Store', commercialType: 'Fashion Retail Store', rating: 4.2, reviewsCount: 1530, status: 'Open • Closes 10 PM', radiusOffsetKm: 1.1, angleDeg: 75, areaDesc: 'East Transit Avenue' },
+    { name: 'McDonald’s 24/7 Drive-Thru', brand: 'McDonald’s', category: 'Quick Service Restaurant', commercialType: 'Drive-Thru Hub', rating: 4.2, reviewsCount: 4200, status: 'Open 24 Hours', radiusOffsetKm: 0.5, angleDeg: 15, areaDesc: 'North Intersection' },
+    { name: 'Apple Authorized Premium Store', brand: 'Apple / Unicorn', category: 'Premium Technology Retail', commercialType: 'Brand Flagship Store', rating: 4.9, reviewsCount: 3100, status: 'Open • Closes 9 PM', radiusOffsetKm: 1.5, angleDeg: 190, areaDesc: 'Tech Retail Park' },
+    { name: 'KFC Express & Dine-in', brand: 'Yum! Brands', category: 'Fast Food & QSR', commercialType: 'Commercial Food Node', rating: 4.1, reviewsCount: 2890, status: 'Open • Closes 11 PM', radiusOffsetKm: 1.7, angleDeg: 340, areaDesc: 'City Center Link' },
+
+    // Mid-Ring City Commercial Centers & Megamalls (2.5km - 6.5km)
+    { name: 'Decathlon Sports Megastore', brand: 'Decathlon', category: 'Sporting Goods & Equipment', commercialType: 'Destination Superstore', rating: 4.8, reviewsCount: 6540, status: 'Open • Closes 10 PM', radiusOffsetKm: 2.8, angleDeg: 165, areaDesc: 'Outer Ring Highway' },
+    { name: 'Westside Lifestyle Flagship', brand: 'Trent Ltd', category: 'Fashion, Footwear & Living', commercialType: 'Department Flagship', rating: 4.4, reviewsCount: 2190, status: 'Open • Closes 9:30 PM', radiusOffsetKm: 2.1, angleDeg: 340, areaDesc: 'North City Center' },
+    { name: 'Shoppers Stop Galleria Mall', brand: 'Shoppers Stop', category: 'Luxury Department Store', commercialType: 'Mall Anchor Store', rating: 4.3, reviewsCount: 3400, status: 'Open • Closes 10 PM', radiusOffsetKm: 3.2, angleDeg: 260, areaDesc: 'West Mall Galleria' },
+    { name: 'Nexus Celebration Mall', brand: 'Nexus Malls', category: 'Regional Shopping Mall', commercialType: 'Shopping Mall & Multiplex', rating: 4.6, reviewsCount: 14200, status: 'Open • Closes 11 PM', radiusOffsetKm: 4.1, angleDeg: 90, areaDesc: 'East District Center' },
+    { name: 'Phoenix Marketcity Megamall', brand: 'The Phoenix Mills', category: 'Destination Retail & Leisure', commercialType: 'Mega Shopping Mall', rating: 4.7, reviewsCount: 22800, status: 'Open • Closes 11 PM', radiusOffsetKm: 5.2, angleDeg: 215, areaDesc: 'South Expressway Hub' },
+    { name: 'Inorbit Mega Mall', brand: 'K Raheja Corp', category: 'Shopping Mall & Entertainment', commercialType: 'Lifestyle Complex', rating: 4.5, reviewsCount: 11600, status: 'Open • Closes 10:30 PM', radiusOffsetKm: 4.8, angleDeg: 310, areaDesc: 'Northwest Commercial Hub' },
+    { name: 'IKEA City Store & Warehouse', brand: 'Ingka Group', category: 'Home Furnishing Mega-Store', commercialType: 'Global Mega Retailer', rating: 4.8, reviewsCount: 18500, status: 'Open • Closes 10 PM', radiusOffsetKm: 5.8, angleDeg: 45, areaDesc: 'Northeast Bypass Road' },
+    { name: 'Pantaloons Mega Fashion', brand: 'Aditya Birla Fashion', category: 'Family Apparel & Retail', commercialType: 'Retail Department Store', rating: 4.2, reviewsCount: 1870, status: 'Open • Closes 9:30 PM', radiusOffsetKm: 3.7, angleDeg: 180, areaDesc: 'Southern Retail Spine' },
+    { name: 'Vijay Sales Electronics Superstore', brand: 'Vijay Sales', category: 'Home Appliances & Digital', commercialType: 'Electronics Megastore', rating: 4.3, reviewsCount: 2450, status: 'Open • Closes 9:30 PM', radiusOffsetKm: 4.4, angleDeg: 140, areaDesc: 'South Commercial Ring' },
+    { name: 'H&M Global Fashion Store', brand: 'H&M Hennes & Mauritz', category: 'International Apparel', commercialType: 'High-Street Brand Outlet', rating: 4.5, reviewsCount: 4780, status: 'Open • Closes 10 PM', radiusOffsetKm: 3.5, angleDeg: 280, areaDesc: 'West End Shopping Strip' },
+
+    // Outer Regional City Corridors & Expressways (7km - 16km)
+    { name: 'Reliance Digital Mega Center', brand: 'Reliance Retail', category: 'Electronics & Tech Hypermarket', commercialType: 'Regional Tech Center', rating: 4.4, reviewsCount: 3120, status: 'Open • Closes 10 PM', radiusOffsetKm: 7.2, angleDeg: 25, areaDesc: 'North Airport Corridor' },
+    { name: 'Max Fashion Hyper Store', brand: 'Landmark Group', category: 'Value Apparel Hyperstore', commercialType: 'Regional Commercial Center', rating: 4.3, reviewsCount: 1650, status: 'Open • Closes 9:30 PM', radiusOffsetKm: 8.5, angleDeg: 145, areaDesc: 'Southeast Industrial Belt' },
+    { name: 'Nature’s Basket Gourmet Store', brand: 'Spencer’s Retail', category: 'Gourmet & Imported Grocery', commercialType: 'Boutique Supermarket', rating: 4.5, reviewsCount: 980, status: 'Open • Closes 10 PM', radiusOffsetKm: 6.9, angleDeg: 275, areaDesc: 'West Suburbs Plaza' },
+    { name: 'Subway Fresh 24/7 Drive-Thru', brand: 'Subway IP LLC', category: 'Quick Service Dining', commercialType: 'Express Highway Kiosk', rating: 4.0, reviewsCount: 1120, status: 'Open 24 Hours', radiusOffsetKm: 9.4, angleDeg: 200, areaDesc: 'South Ring Bypass' },
+    { name: 'Domino’s Mega Pizza Hub', brand: 'Jubilant FoodWorks', category: 'Fast Casual Dining', commercialType: 'QSR Delivery Hub', rating: 4.2, reviewsCount: 2340, status: 'Open • Closes 1 AM', radiusOffsetKm: 11.2, angleDeg: 65, areaDesc: 'East Tech Corridor' },
+    { name: 'Smart Bazaar Superstore', brand: 'Reliance Retail', category: 'Value Supermarket & Home', commercialType: 'Outer Highway Supercenter', rating: 4.1, reviewsCount: 2900, status: 'Open • Closes 10 PM', radiusOffsetKm: 12.8, angleDeg: 330, areaDesc: 'North Expressway Gateway' },
+    { name: 'Tanishq & Titan Flagship Store', brand: 'Titan Company', category: 'Jewelry & Luxury Lifestyle', commercialType: 'Luxury Destination Boutique', rating: 4.7, reviewsCount: 1540, status: 'Open • Closes 9 PM', radiusOffsetKm: 8.1, angleDeg: 110, areaDesc: 'East Commercial Boulevard' },
+    { name: 'Burger King Highway Drive-Thru', brand: 'Restaurant Brands Asia', category: 'QSR Fast Food', commercialType: 'Highway Transit Outlet', rating: 4.3, reviewsCount: 3180, status: 'Open 24 Hours', radiusOffsetKm: 14.5, angleDeg: 240, areaDesc: 'Southwest Express Junction' },
+    { name: 'Vishal Mega Mart', brand: 'Airplaza Retail', category: 'Hypermarket & Value Fashion', commercialType: 'Suburban Superstore', rating: 4.0, reviewsCount: 4100, status: 'Open • Closes 10 PM', radiusOffsetKm: 15.6, angleDeg: 18, areaDesc: 'North-East Orbital Ring' },
   ],
   'EV Charging Station': [
-    { name: 'Tata Power EZ Charge 60kW DC Fast Hub', brand: 'Tata Power', category: 'Dual-Gun CCS2 Fast Hub', rating: 4.5, radiusOffsetKm: 0.7, angleDeg: 45 },
-    { name: 'Jio-bp pulse 120kW Super-Charger', brand: 'Jio-bp', category: 'Ultra-Fast Highway Hub', rating: 4.7, radiusOffsetKm: 1.3, angleDeg: 140 },
-    { name: 'Ather Grid Fast Charging Point', brand: 'Ather Energy', category: '2-Wheeler Rapid Point', rating: 4.6, radiusOffsetKm: 0.9, angleDeg: 225 },
-    { name: 'Statiq Ultra Commercial Station', brand: 'Statiq', category: 'Public Multi-Vehicle Hub', rating: 4.2, radiusOffsetKm: 2.2, angleDeg: 315 },
-    { name: 'ChargePoint 50kW Dual Charger', brand: 'ChargePoint', category: 'Fleet & Public Fast Hub', rating: 4.4, radiusOffsetKm: 1.8, angleDeg: 85 },
-    { name: 'Zeon Charging 150kW Hyper-Port', brand: 'Zeon', category: 'Commercial Ultra-Fast', rating: 4.6, radiusOffsetKm: 3.1, angleDeg: 180 },
+    // Core & Inner Area (0.5km - 2.5km)
+    { name: 'Tata Power EZ Charge 60kW DC Fast Hub', brand: 'Tata Power', category: 'Dual-Gun CCS2 Fast Hub', commercialType: 'Public Fast Charging Hub', rating: 4.5, reviewsCount: 820, status: 'Operational • 24/7', radiusOffsetKm: 0.7, angleDeg: 45, areaDesc: 'Central Transit Plaza' },
+    { name: 'Jio-bp pulse 120kW Super-Charger', brand: 'Jio-bp', category: 'Ultra-Fast Dual Gun Hub', commercialType: 'Commercial Highway Hub', rating: 4.7, reviewsCount: 1450, status: 'Operational • 24/7', radiusOffsetKm: 1.3, angleDeg: 140, areaDesc: 'South Main Arterial' },
+    { name: 'Ather Grid Rapid Charging Point', brand: 'Ather Energy', category: '2-Wheeler Rapid Point', commercialType: 'Urban Fast Point', rating: 4.6, reviewsCount: 940, status: 'Operational • 24/7', radiusOffsetKm: 0.9, angleDeg: 225, areaDesc: 'West Commercial Street' },
+    { name: 'Statiq Ultra Commercial Station', brand: 'Statiq', category: 'Multi-Vehicle Public Hub', commercialType: 'Commercial Fleet Hub', rating: 4.2, reviewsCount: 620, status: 'Operational • 24/7', radiusOffsetKm: 1.8, angleDeg: 315, areaDesc: 'North Metro Interchange' },
+    { name: 'ChargePoint 50kW Dual Charger', brand: 'ChargePoint', category: 'Fleet & Public Fast Hub', commercialType: 'Dual Dispenser Site', rating: 4.4, reviewsCount: 390, status: 'Operational • 24/7', radiusOffsetKm: 1.5, angleDeg: 85, areaDesc: 'East Boulevard Hub' },
+    { name: 'Servotech 60kW DC Fast Station', brand: 'Servotech Power', category: 'Heavy & Passenger EV Point', commercialType: 'Public Fast Charger', rating: 4.3, reviewsCount: 280, status: 'Operational • 24/7', radiusOffsetKm: 2.2, angleDeg: 195, areaDesc: 'South Tech Complex' },
+
+    // Mid-Ring City Corridors (2.8km - 6.5km)
+    { name: 'Zeon Charging 150kW Hyper-Port', brand: 'Zeon', category: 'Commercial Ultra-Fast Hub', commercialType: 'High-Power EV Plaza', rating: 4.6, reviewsCount: 1120, status: 'Operational • 24/7', radiusOffsetKm: 3.1, angleDeg: 180, areaDesc: 'South Ring Junction' },
+    { name: 'Shell Recharge Ultra-Fast 120kW', brand: 'Shell EV', category: 'Highway Supercharging Plaza', commercialType: 'Fuel & EV Supercourt', rating: 4.7, reviewsCount: 1890, status: 'Operational • 24/7', radiusOffsetKm: 4.3, angleDeg: 290, areaDesc: 'West Expressway Node' },
+    { name: 'BPCL e-Drive Fast EV Plaza', brand: 'Bharat Petroleum', category: 'Public Fuel & EV Station', commercialType: 'Energy Super-Station', rating: 4.3, reviewsCount: 780, status: 'Operational • 24/7', radiusOffsetKm: 3.8, angleDeg: 60, areaDesc: 'Northeast Arterial' },
+    { name: 'Kazam EV Rapid Charging Hub', brand: 'Kazam', category: 'Commercial Fleet EV Point', commercialType: 'Fleet & Public Charger', rating: 4.2, reviewsCount: 510, status: 'Operational • 24/7', radiusOffsetKm: 5.1, angleDeg: 125, areaDesc: 'Southeast Commercial Park' },
+    { name: 'Fortum Charge & Drive Hub', brand: 'Fortum', category: 'Green Energy DC Fast Station', commercialType: 'Nordic Clean EV Hub', rating: 4.5, reviewsCount: 670, status: 'Operational • 24/7', radiusOffsetKm: 4.9, angleDeg: 215, areaDesc: 'Southwest Tech Zone' },
+    { name: 'Glida 120kW Supercharger Station', brand: 'Glida (Fortum)', category: 'Multi-Bay DC Fast Hub', commercialType: 'High-Traffic Station', rating: 4.6, reviewsCount: 890, status: 'Operational • 24/7', radiusOffsetKm: 5.9, angleDeg: 345, areaDesc: 'North Bypass Flyover' },
+
+    // Outer Expressway Corridors (7km - 16km)
+    { name: 'Tata Power 180kW Highway Mega-Hub', brand: 'Tata Power', category: 'Multi-Bay Highway Super-Hub', commercialType: 'Intercity Mega-Station', rating: 4.8, reviewsCount: 2310, status: 'Operational • 24/7', radiusOffsetKm: 8.2, angleDeg: 15, areaDesc: 'North Highway Toll Plaza' },
+    { name: 'Jio-bp pulse Express Freight Charge Hub', brand: 'Jio-bp', category: 'Heavy Commercial EV Station', commercialType: 'Freight & Bus Fast Port', rating: 4.6, reviewsCount: 1140, status: 'Operational • 24/7', radiusOffsetKm: 10.5, angleDeg: 165, areaDesc: 'Logistics Park Corridor' },
+    { name: 'Statiq Highway Corridor EV Station', brand: 'Statiq', category: 'Intercity DC Fast Charging', commercialType: 'Highway Oasis Port', rating: 4.4, reviewsCount: 960, status: 'Operational • 24/7', radiusOffsetKm: 12.4, angleDeg: 255, areaDesc: 'Western Bypass Exit' },
+    { name: 'HPCL e-Mobility Super Hub', brand: 'Hindustan Petroleum', category: 'Multi-Standard EV Plaza', commercialType: 'Highway Service Supercourt', rating: 4.3, reviewsCount: 840, status: 'Operational • 24/7', radiusOffsetKm: 14.1, angleDeg: 345, areaDesc: 'Northwest Ring Highway' },
+    { name: 'ChargeZone 240kW Ultra-Fast Hub', brand: 'ChargeZone', category: 'Ultra-High-Voltage Corridor', commercialType: 'Flagship EV Superstation', rating: 4.7, reviewsCount: 1680, status: 'Operational • 24/7', radiusOffsetKm: 15.8, angleDeg: 100, areaDesc: 'East National Corridor' },
   ],
   'Warehouse': [
-    { name: 'Amazon Sortation & Fulfillment Centre', brand: 'Amazon Logistics', category: 'E-commerce Mega Fulfillment', rating: 4.8, radiusOffsetKm: 2.4, angleDeg: 60 },
-    { name: 'Flipkart Large Goods Hub', brand: 'Flipkart Logistics', category: 'Regional Sorting Facility', rating: 4.5, radiusOffsetKm: 3.1, angleDeg: 150 },
-    { name: 'DHL Global Express Air Freight Terminal', brand: 'DHL Express', category: 'Cross-Border Logistics Gateway', rating: 4.6, radiusOffsetKm: 1.9, angleDeg: 240 },
-    { name: 'Blue Dart Aviation Cargo Hub', brand: 'Blue Dart', category: 'Express Parcel Distribution', rating: 4.3, radiusOffsetKm: 2.7, angleDeg: 320 },
-    { name: 'Delhivery Mega Gateway & Truck Terminal', brand: 'Delhivery', category: 'Automated Hub & Spoke Facility', rating: 4.2, radiusOffsetKm: 3.9, angleDeg: 105 },
+    // City Edge & Industrial Zones (1.5km - 5.5km)
+    { name: 'Amazon Sortation & Fulfillment Centre', brand: 'Amazon Logistics', category: 'E-commerce Mega Fulfillment', commercialType: 'Automated Mega Sort Facility', rating: 4.8, reviewsCount: 4200, status: 'Active 24/7 Operations', radiusOffsetKm: 2.4, angleDeg: 60, areaDesc: 'East Logistics Corridor' },
+    { name: 'Flipkart Large Goods Hub', brand: 'Flipkart Logistics', category: 'Regional Sorting Facility', commercialType: 'Grade-A Regional Warehouse', rating: 4.5, reviewsCount: 2800, status: 'Active 24/7 Operations', radiusOffsetKm: 3.1, angleDeg: 150, areaDesc: 'South Industrial Estate' },
+    { name: 'DHL Global Express Air Cargo Terminal', brand: 'DHL Express', category: 'Cross-Border Logistics Gateway', commercialType: 'Airport Cargo Hub', rating: 4.6, reviewsCount: 1940, status: 'Active • Customs Cleared', radiusOffsetKm: 1.9, angleDeg: 240, areaDesc: 'Airport Cargo Terminal' },
+    { name: 'Blue Dart Aviation Cargo Hub', brand: 'Blue Dart', category: 'Express Parcel Distribution', commercialType: 'Multi-Modal Sort Depot', rating: 4.3, reviewsCount: 1510, status: 'Active 24/7 Operations', radiusOffsetKm: 2.7, angleDeg: 320, areaDesc: 'North Railway Freight Yard' },
+    { name: 'Delhivery Mega Gateway & Truck Terminal', brand: 'Delhivery', category: 'Automated Hub & Spoke Facility', commercialType: 'National Sorting Superhub', rating: 4.2, reviewsCount: 3100, status: 'Active 24/7 Operations', radiusOffsetKm: 3.9, angleDeg: 105, areaDesc: 'Southeast Freight Ring' },
+    { name: 'Shadowfax E-Commerce Mid-Mile Hub', brand: 'Shadowfax', category: 'Express Hyperlocal Hub', commercialType: 'Rapid Sort Facility', rating: 4.1, reviewsCount: 890, status: 'Active 24/7 Operations', radiusOffsetKm: 4.8, angleDeg: 205, areaDesc: 'South Outer Industrial Belt' },
+
+    // Outer Logistics Parks & Dry Ports (6km - 16km)
+    { name: 'IndoSpace Industrial & Logistics Park', brand: 'IndoSpace', category: 'Grade-A Warehousing Complex', commercialType: 'Multi-Tenant Logistics Park', rating: 4.7, reviewsCount: 1250, status: 'Full Capacity Operations', radiusOffsetKm: 7.8, angleDeg: 40, areaDesc: 'National Highway Logistics Zone' },
+    { name: 'Mahindra Logistics Mega Multi-Client Hub', brand: 'Mahindra Logistics', category: 'Automotive & 3PL Warehouse', commercialType: 'Integrated 3PL Facility', rating: 4.5, reviewsCount: 980, status: 'Active Operations', radiusOffsetKm: 9.4, angleDeg: 195, areaDesc: 'South Industrial Mega-Cluster' },
+    { name: 'TVS Supply Chain Regional Hub', brand: 'TVS SCS', category: 'Integrated Supply Chain Center', commercialType: 'Industrial Distribution Center', rating: 4.4, reviewsCount: 760, status: 'Active Operations', radiusOffsetKm: 8.6, angleDeg: 285, areaDesc: 'West Port Feeder Corridor' },
+    { name: 'Allcargo Logistics Inland Container Depot', brand: 'Allcargo', category: 'Dry Port & Container Freight', commercialType: 'Inland Port & Rail Siding', rating: 4.6, reviewsCount: 1420, status: 'Active Rail Freight Node', radiusOffsetKm: 12.1, angleDeg: 135, areaDesc: 'Dedicated Freight Corridor' },
+    { name: 'FedEx Express Freight Terminal', brand: 'FedEx', category: 'Global Air Cargo & Courier Hub', commercialType: 'Express Courier Distribution', rating: 4.5, reviewsCount: 1100, status: 'Active 24/7 Operations', radiusOffsetKm: 14.3, angleDeg: 330, areaDesc: 'North Outer Logistics Ring' },
+    { name: 'ESR Logistics Mega Park', brand: 'ESR Group', category: 'Modern Logistics Real Estate', commercialType: 'Grade-A Mega Park', rating: 4.8, reviewsCount: 650, status: 'Operational Grade-A', radiusOffsetKm: 15.5, angleDeg: 80, areaDesc: 'Eastern Express Bypass' },
   ],
   'Telecom Tower': [
-    { name: 'Indus Towers 5G High-Density Active Node', brand: 'Indus Towers', category: 'Shared Infrastructure Monopole', rating: 4.6, radiusOffsetKm: 0.4, angleDeg: 30 },
-    { name: 'Bharti Airtel 5G Ultra-Wideband Tower', brand: 'Airtel', category: 'Fiberized Macrocell Tower', rating: 4.7, radiusOffsetKm: 1.2, angleDeg: 135 },
-    { name: 'Reliance Jio True5G Giga-Node Lattice', brand: 'Jio Platforms', category: 'C-Band 5G High-Capacity', rating: 4.8, radiusOffsetKm: 0.8, angleDeg: 220 },
-    { name: 'American Tower Corp (ATC) Multi-Tenant Site', brand: 'ATC India', category: 'Co-Location Lattice Tower', rating: 4.3, radiusOffsetKm: 2.1, angleDeg: 305 },
+    // Urban High-Density Sector (0.4km - 3km)
+    { name: 'Indus Towers 5G High-Density Node', brand: 'Indus Towers', category: 'Shared Infrastructure Monopole', commercialType: 'Shared Macrocell Tower', rating: 4.6, reviewsCount: 310, status: 'Online • 99.98% Uptime', radiusOffsetKm: 0.4, angleDeg: 30, areaDesc: 'Central Urban Core' },
+    { name: 'Bharti Airtel 5G Ultra-Wideband Tower', brand: 'Airtel', category: 'Fiberized Macrocell Tower', commercialType: 'High-Power 5G Hub Site', rating: 4.7, reviewsCount: 420, status: 'Online • Fiber-Connected', radiusOffsetKm: 1.2, angleDeg: 135, areaDesc: 'South Commercial Sector' },
+    { name: 'Reliance Jio True5G Giga-Node Lattice', brand: 'Jio Platforms', category: 'C-Band 5G High-Capacity', commercialType: 'Autonomous 5G Node', rating: 4.8, reviewsCount: 580, status: 'Online • Active MIMO', radiusOffsetKm: 0.8, angleDeg: 220, areaDesc: 'West Residential Cluster' },
+    { name: 'American Tower Corp (ATC) Site', brand: 'ATC India', category: 'Co-Location Lattice Tower', commercialType: 'Multi-Tenant Telecom Mast', rating: 4.3, reviewsCount: 190, status: 'Online • Multi-Carrier', radiusOffsetKm: 2.1, angleDeg: 305, areaDesc: 'North Commercial Zone' },
+    { name: 'Summit Digitel 5G Small Cell Cluster', brand: 'Summit Digitel', category: 'Dense Urban Small Cell Pole', commercialType: 'Street-Level Small Cell', rating: 4.5, reviewsCount: 220, status: 'Online • Active Beamforming', radiusOffsetKm: 1.6, angleDeg: 80, areaDesc: 'East Financial District' },
+
+    // Suburban & Transit Corridors (4km - 15km)
+    { name: 'BSNL Telecom Central Exchange Tower', brand: 'BSNL', category: 'State Telecom Backbone Mast', commercialType: 'Central Exchange Tower', rating: 4.0, reviewsCount: 650, status: 'Online • Microwave Backbone', radiusOffsetKm: 4.6, angleDeg: 170, areaDesc: 'South Suburb Hub' },
+    { name: 'GTL Infrastructure Highway Monopole', brand: 'GTL Infra', category: 'Highway Corridor Cell Site', commercialType: 'Corridor Monopole', rating: 4.2, reviewsCount: 140, status: 'Online • Highway Feeder', radiusOffsetKm: 6.8, angleDeg: 250, areaDesc: 'Western Expressway' },
+    { name: 'Indus Towers High-Power Macrocell', brand: 'Indus Towers', category: 'Long-Range Rural/Suburban Mast', commercialType: 'High-Altitude Guyed Mast', rating: 4.6, reviewsCount: 280, status: 'Online • High Gain', radiusOffsetKm: 9.3, angleDeg: 20, areaDesc: 'North Expansion Corridor' },
+    { name: 'Airtel Fiberized 5G Micro-Tower', brand: 'Airtel', category: 'Transit Corridor Node', commercialType: 'Fiberized Monopole', rating: 4.7, reviewsCount: 390, status: 'Online • High Bandwidth', radiusOffsetKm: 11.5, angleDeg: 115, areaDesc: 'East Industrial Bypass' },
+    { name: 'Jio 5G Massive MIMO Tower Site', brand: 'Jio Platforms', category: 'High-Density Smart City Node', commercialType: 'Massive MIMO Tower', rating: 4.8, reviewsCount: 710, status: 'Online • AI Load Balancing', radiusOffsetKm: 13.8, angleDeg: 300, areaDesc: 'Northwest Ring Corridor' },
+    { name: 'ATC India Rural Reach Supermast', brand: 'ATC India', category: 'Regional Cellular Mast', commercialType: 'High-Gain Lattice Mast', rating: 4.4, reviewsCount: 160, status: 'Online • Active Backhaul', radiusOffsetKm: 15.2, angleDeg: 190, areaDesc: 'South Intercity Highway' },
   ],
   'Renewable Energy': [
-    { name: 'Tata Power Solar Microgrid Plant', brand: 'Tata Power Solar', category: 'Ground-Mounted Photovoltaic Array', rating: 4.7, radiusOffsetKm: 3.2, angleDeg: 55 },
-    { name: 'Adani Green Energy Substation & Feed', brand: 'Adani Green', category: 'High-Voltage Grid Interconnection', rating: 4.5, radiusOffsetKm: 4.1, angleDeg: 160 },
-    { name: 'Sterling & Wilson Commercial Solar Farm', brand: 'Sterling & Wilson', category: 'Commercial Rooftop & Solar Field', rating: 4.6, radiusOffsetKm: 2.6, angleDeg: 280 },
+    // Suburbs & Outskirts (2.5km - 16km)
+    { name: 'Tata Power Solar Microgrid Plant', brand: 'Tata Power Solar', category: 'Ground-Mounted Photovoltaic Array', commercialType: '15MW Solar Farm & BESS', rating: 4.7, reviewsCount: 520, status: 'Generating • 98.4% Efficiency', radiusOffsetKm: 3.2, angleDeg: 55, areaDesc: 'Northeast Substation Corridor' },
+    { name: 'Adani Green Energy Substation & Feed', brand: 'Adani Green', category: 'High-Voltage Grid Interconnection', commercialType: '33kV Clean Power Substation', rating: 4.5, reviewsCount: 410, status: 'Grid Synchronized', radiusOffsetKm: 4.1, angleDeg: 160, areaDesc: 'South Open Industrial Land' },
+    { name: 'Sterling & Wilson Commercial Solar Farm', brand: 'Sterling & Wilson', category: 'Commercial Rooftop & Solar Field', commercialType: 'Commercial Distributed Plant', rating: 4.6, reviewsCount: 310, status: 'Generating • Active Net-Metering', radiusOffsetKm: 2.6, angleDeg: 280, areaDesc: 'Western Industrial Belt' },
+    { name: 'ReNew Power Wind-Solar Hybrid Station', brand: 'ReNew Power', category: 'Utility-Scale Hybrid Substation', commercialType: '50MW Hybrid Utility Station', rating: 4.8, reviewsCount: 680, status: 'Generating • High Yield', radiusOffsetKm: 6.9, angleDeg: 110, areaDesc: 'Southeast Rural Outskirts' },
+    { name: 'Azure Power Utility Photovoltaic Farm', brand: 'Azure Power', category: '50MW Grid Tied Solar Park', commercialType: 'Utility Solar Generation Park', rating: 4.4, reviewsCount: 390, status: 'Generating • SCADA Monitored', radiusOffsetKm: 9.7, angleDeg: 215, areaDesc: 'Southwest Agricultural Buffer' },
+    { name: 'Vikram Solar Commercial Micro-Array', brand: 'Vikram Solar', category: 'Industrial Park Solar Canopy', commercialType: 'Industrial Rooftop & Carport Array', rating: 4.5, reviewsCount: 260, status: 'Generating • Active Feed', radiusOffsetKm: 8.3, angleDeg: 335, areaDesc: 'Northwest Green Zone' },
+    { name: 'Waaree Energies Rooftop Solar Cluster', brand: 'Waaree Energies', category: 'Distributed Rooftop Clean Energy', commercialType: 'Cluster Grid Feed Array', rating: 4.6, reviewsCount: 470, status: 'Generating • Active Grid', radiusOffsetKm: 13.2, angleDeg: 75, areaDesc: 'Eastern High-Voltage Corridor' },
+    { name: 'CleanMax Commercial Industrial Solar Farm', brand: 'CleanMax', category: 'Corporate PPA Clean Energy Plant', commercialType: 'Private Power Park', rating: 4.7, reviewsCount: 380, status: 'Generating • PPA Dedicated', radiusOffsetKm: 15.6, angleDeg: 245, areaDesc: 'Southwest Energy Corridor' },
   ],
 };
 
 /**
- * Generates realistic real-world competitors around target coordinates
+ * Generates realistic real-world competitors around target coordinates across the whole map
  */
 export function generateRealWorldCompetitors(
   centerLat: number,
@@ -79,6 +155,10 @@ export function generateRealWorldCompetitors(
       lng: Number((centerLng + lngOffset).toFixed(5)),
       distanceKm: Number(tmpl.radiusOffsetKm.toFixed(1)),
       rating: tmpl.rating,
+      reviewsCount: tmpl.reviewsCount,
+      status: tmpl.status,
+      address: tmpl.areaDesc,
+      commercialType: tmpl.commercialType,
     };
   });
 }
@@ -140,73 +220,6 @@ export function generateH3GridAround(centerLat: number, centerLng: number): H3Ce
   });
 
   return cells;
-}
-
-/**
- * Generates 3D building polygon footprints with height data around target coordinates
- */
-export function generate3DBuildingsAround(centerLat: number, centerLng: number): GeoJSON.FeatureCollection {
-  const features: GeoJSON.Feature[] = [];
-
-  const buildingTypes = [
-    { name: 'Commercial Tower', baseHeight: 85, color: '#6366f1', type: 'commercial' },
-    { name: 'Retail Shopping Mall', baseHeight: 35, color: '#10b981', type: 'retail' },
-    { name: 'Office Complex', baseHeight: 55, color: '#38bdf8', type: 'office' },
-    { name: 'Logistics Hub', baseHeight: 22, color: '#f59e0b', type: 'industrial' },
-    { name: 'Residential Tower', baseHeight: 65, color: '#a855f7', type: 'residential' },
-    { name: 'Tech Park Block', baseHeight: 45, color: '#ec4899', type: 'office' },
-  ];
-
-  const gridSize = 6;
-  const spacingKm = 0.28;
-
-  for (let x = -gridSize; x <= gridSize; x++) {
-    for (let y = -gridSize; y <= gridSize; y++) {
-      if (Math.abs(x) === 0 && Math.abs(y) === 0) continue; // Leave central road clear
-      if (Math.random() < 0.35) continue; // Organic street gaps
-
-      const bType = buildingTypes[Math.abs(x * 3 + y * 5) % buildingTypes.length];
-      const heightVariance = 0.7 + Math.random() * 0.8;
-      const height = Math.round(bType.baseHeight * heightVariance);
-
-      const bCenterLat = centerLat + (y * spacingKm + (Math.random() - 0.5) * 0.05) / 111.32;
-      const bCenterLng = centerLng + (x * spacingKm + (Math.random() - 0.5) * 0.05) / (111.32 * Math.cos((centerLat * Math.PI) / 180));
-
-      const w = 0.00075 + Math.random() * 0.0006;
-      const h = 0.00075 + Math.random() * 0.0006;
-
-      const coords: [number, number][] = [
-        [bCenterLng - w, bCenterLat - h],
-        [bCenterLng + w, bCenterLat - h],
-        [bCenterLng + w, bCenterLat + h],
-        [bCenterLng - w, bCenterLat + h],
-        [bCenterLng - w, bCenterLat - h],
-      ];
-
-      features.push({
-        type: 'Feature',
-        id: `bld_${x}_${y}`,
-        properties: {
-          name: `${bType.name} #${Math.abs(x * 7 + y * 11) % 90 + 10}`,
-          type: bType.type,
-          render_height: height,
-          render_min_height: 0,
-          height,
-          min_height: 0,
-          color: bType.color,
-        },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [coords],
-        },
-      });
-    }
-  }
-
-  return {
-    type: 'FeatureCollection',
-    features,
-  };
 }
 
 const workspaceData = CITY_DATA.workspace || { candidateSites: [], competitors: [], h3Cells: [] };
@@ -517,5 +530,3 @@ The primary limitation is competitor concentration within the 5 km catchment are
 
 The site has approximately 64,200 people reachable within 20 minutes and immediate access to arterial transit lines.`;
 }
-
-
