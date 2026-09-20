@@ -81,10 +81,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       setGeneratedSuccess(true);
       setTimeout(() => setGeneratedSuccess(false), 4500);
     } catch (err) {
-      console.warn('HTML Canvas export encountered stylesheet parsing, falling back to High-Res Print PDF:', err);
-      window.print();
-      setGeneratedSuccess(true);
-      setTimeout(() => setGeneratedSuccess(false), 4500);
+      console.error('PDF Generation failed:', err);
     } finally {
       setIsGenerating(false);
       setDownloadProgress(null);

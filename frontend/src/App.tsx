@@ -28,9 +28,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { analyzeSite } from './services/gisService';
 
 export default function App() {
-  const [showIntroPage, setShowIntroPage] = useState<boolean>(() => {
-    return sessionStorage.getItem('has_entered_platform') === 'true' ? false : false;
-  });
+  const [showIntroPage, setShowIntroPage] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
 
@@ -307,7 +305,6 @@ export default function App() {
 
             {activeTab === 'data-layers' && (
               <DataLayersPage
-                activeCity={activeCity}
                 layers={layers}
                 onToggleLayer={handleToggleLayer}
                 onChangeOpacity={handleChangeOpacity}

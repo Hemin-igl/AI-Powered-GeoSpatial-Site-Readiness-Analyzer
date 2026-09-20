@@ -23,7 +23,7 @@ import {
 import { BusinessType, CandidateSite, ScoringWeights, City } from '../types';
 import { PRESET_WEIGHTS } from '../data/mockData';
 import { calculateReadinessScore, generateAiExplanation, analyzeSite } from '../services/gisService';
-import { MapCoordinatePickerModal } from '../components/MapCoordinatePickerModal';
+import { MapPinPickerModal } from '../components/MapPinPickerModal';
 
 interface SiteAnalysisPageProps {
   currentSite: CandidateSite;
@@ -50,28 +50,7 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
   const [businessType, setBusinessType] = useState<BusinessType>(currentSite.businessType);
   const [radiusKm, setRadiusKm] = useState('5');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [isGettingGps, setIsGettingGps] = useState(false);
-
-  const handleGetCurrentGps = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
-      return;
-    }
-    setIsGettingGps(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setIsGettingGps(false);
-        setLatInput(pos.coords.latitude.toFixed(6));
-        setLngInput(pos.coords.longitude.toFixed(6));
-      },
-      (err) => {
-        setIsGettingGps(false);
-        alert('Could not get GPS coordinates: ' + err.message);
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  };
+  const [isPinPickerOpen, setIsPinPickerOpen] = useState(false);
 
   // Configurable weights (default 30%, 25%, 15%, 15%, 15%)
   const [weights, setWeights] = useState<ScoringWeights>({
@@ -132,10 +111,10 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
   };
 
   // Run Analysis on new coordinates
-  const handleRunAnalysis = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const lat = parseFloat(latInput);
-    const lng = parseFloat(lngInput);
+  const handleRunAnalysis = async (e?: React.FormEvent, overrideCoords?: { lat: number; lng: number }) => {
+    if (e) e.preventDefault();
+    const lat = overrideCoords ? overrideCoords.lat : parseFloat(latInput);
+    const lng = overrideCoords ? overrideCoords.lng : parseFloat(lngInput);
     if (isNaN(lat) || isNaN(lng)) return;
 
     setIsAnalyzing(true);
@@ -153,6 +132,12 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
     }
   };
 
+  const handlePinPicked = async (coords: { lat: number; lng: number }) => {
+    setLatInput(coords.lat.toString());
+    setLngInput(coords.lng.toString());
+    await handleRunAnalysis(undefined, coords);
+  };
+
   const statusColor =
     finalScore >= 80 ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-100 dark:border-emerald-800' :
     finalScore >= 65 ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border-amber-100 dark:border-amber-800' :
@@ -167,7 +152,7 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* 1. TOP ANALYZE LOCATION FORM */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <MapPin className="w-4 h-4" />
@@ -175,29 +160,20 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Analyze a Location</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Input geographic coordinates in {cityName} to compute multi-criteria spatial readiness across 5 configurable pillars
+                Input geographic coordinates in {cityName} to compute multi-criteria spatial readiness
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleGetCurrentGps}
-              disabled={isGettingGps}
-              className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-xs font-semibold flex items-center gap-1.5 transition-all"
-            >
-              <Navigation className={`w-3.5 h-3.5 ${isGettingGps ? 'animate-spin' : ''}`} />
-              <span>{isGettingGps ? 'Locating...' : 'Use My GPS'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsPickerOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-600/30 transition-all active:scale-95"
-            >
-              <MapPin className="w-3.5 h-3.5" />
-              <span>Drop Pin on Map</span>
-            </button>
-          </div>
+
+          {/* Interactive Geo Drop Pin Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsPinPickerOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer hover:scale-102"
+          >
+            <MapPin className="w-4 h-4 text-indigo-500 animate-bounce" />
+            <span>📍 Drop Pin on Map</span>
+          </button>
         </div>
 
         <form onSubmit={handleRunAnalysis} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end">
@@ -588,16 +564,14 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
       </div>
 
       {/* Interactive Geo Drop Pin Modal */}
-      <MapCoordinatePickerModal
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
+      <MapPinPickerModal
+        isOpen={isPinPickerOpen}
+        initialLat={parseFloat(latInput) || currentSite.lat}
+        initialLng={parseFloat(lngInput) || currentSite.lng}
         activeCity={activeCity}
-        initialLat={parseFloat(latInput) || activeCity?.lat}
-        initialLng={parseFloat(lngInput) || activeCity?.lng}
-        onSelectCoordinates={(pickedLat, pickedLng) => {
-          setLatInput(pickedLat.toString());
-          setLngInput(pickedLng.toString());
-        }}
+        onClose={() => setIsPinPickerOpen(false)}
+        onConfirm={handlePinPicked}
+        title={`Pick Location in ${cityName}`}
       />
     </div>
   );

@@ -28,24 +28,3 @@ body {
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(71, 85, 105, 0.5);
 }
-
-@media print {
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-  aside, nav, header, .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
-  .printable-dossier {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-}

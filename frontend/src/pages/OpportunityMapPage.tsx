@@ -220,6 +220,9 @@ export const OpportunityMapPage: React.FC<OpportunityMapPageProps> = ({
             onSelectSite={onSelectSite}
             competitors={[]}
             h3Cells={[]}
+            compact={true}
+            hideArchetypeBar={true}
+            hideCandidateDrawer={true}
             layers={[
               {
                 id: 'opportunity',
@@ -235,8 +238,6 @@ export const OpportunityMapPage: React.FC<OpportunityMapPageProps> = ({
             ]}
             onToggleLayer={() => {}}
             onChangeOpacity={() => {}}
-            hideArchetypeBar={true}
-            compactHud={true}
             className="h-[520px]"
           />
         </div>

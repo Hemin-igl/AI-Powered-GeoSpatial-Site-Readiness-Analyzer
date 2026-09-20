@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import * as maplibregl from 'maplibre-gl';
+import maplibregl, { Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
 import {
   ZoomIn,
   ZoomOut,
@@ -36,7 +36,6 @@ import {
   ARCHETYPES,
 } from '../types';
 import { LayerControl } from './LayerControl';
-import { ISOCHRONE_DATA } from '../data/mockData';
 import {
   generateRealWorldCompetitors,
   generateH3GridAround,
@@ -224,9 +223,12 @@ interface MapViewProps {
   spatialAlgorithm?: SpatialAlgorithm;
   onSelectHexCell?: (cell: H3CellData) => void;
   onAddNewSite?: (site: CandidateSite) => void;
+  onPickCoordinates?: (coords: { lat: number; lng: number }) => void;
   className?: string;
+  compact?: boolean;
   hideArchetypeBar?: boolean;
-  compactHud?: boolean;
+  hideCandidateDrawer?: boolean;
+  hideToolbars?: boolean;
 }
 
 // Generate regular pointy-topped hexagon coordinates for H3 visual representation
@@ -320,12 +322,14 @@ export const MapView: React.FC<MapViewProps> = ({
   showIsochrones = true,
   isochroneMode = 'drive',
   spatialAlgorithm: propSpatialAlgorithm,
-  onSelectHexCell,
   onAddNewSite,
+  onPickCoordinates,
   className = 'h-[540px]',
   activeCity,
+  compact = false,
   hideArchetypeBar = false,
-  compactHud = false,
+  hideCandidateDrawer = false,
+  hideToolbars = false,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -336,7 +340,6 @@ export const MapView: React.FC<MapViewProps> = ({
   const [currentStyle, setCurrentStyle] = useState<StyleKey>('dark');
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [showLayerPanel, setShowLayerPanel] = useState(false);
-  const [showOptionCapsules, setShowOptionCapsules] = useState(!hideArchetypeBar && !compactHud);
   const [activeLayerId, setActiveLayerId] = useState<string>('pop_density');
   const [cursorCoords, setCursorCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(12);
@@ -379,9 +382,11 @@ export const MapView: React.FC<MapViewProps> = ({
   useEffect(() => {
     if (selectedSite?.businessType) {
       setSelectedArchetype(selectedSite.businessType);
-      setInspectedCandidateSite(selectedSite);
+      if (!compact && !hideCandidateDrawer) {
+        setInspectedCandidateSite(selectedSite);
+      }
     }
-  }, [selectedSite]);
+  }, [selectedSite, compact, hideCandidateDrawer]);
 
   // Dynamic active focus coordinates tracking inspected candidate site, pinned point, selected site, or active city
   const activeTargetLocation = useMemo<{ lat: number; lng: number }>(() => {
@@ -463,6 +468,10 @@ export const MapView: React.FC<MapViewProps> = ({
 
     const handleMapClick = async (e: maplibregl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
+
+      if (onPickCoordinates) {
+        onPickCoordinates({ lat, lng });
+      }
 
       if (toolMode === 'pin') {
         // Drop pin & evaluate instant readiness
@@ -1433,97 +1442,79 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
       </div>
 
-      {/* Archetype & Spatial Algorithms Filter Toolbar (Collapsible) */}
-      {showOptionCapsules ? (
-        <div className="absolute top-16 left-4 z-20 flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-black/85 backdrop-blur-xl border border-white/10 text-white shadow-2xl text-xs pointer-events-auto max-w-[calc(100vw-2rem)] sm:max-w-none animate-in fade-in slide-in-from-top-1 duration-150">
+      {/* Archetype & Spatial Algorithms Filter Toolbar */}
+      {!hideArchetypeBar && !compact && !hideToolbars && (
+        <div className="absolute top-16 left-4 z-20 flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-black/85 backdrop-blur-xl border border-white/10 text-white shadow-2xl text-xs pointer-events-auto max-w-[calc(100vw-2rem)] sm:max-w-none">
           {/* Archetype Selector */}
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 hidden sm:inline">
             Archetype:
           </span>
-          {ARCHETYPES.map((arch) => {
-            const isActive = selectedArchetype === arch.type;
-            return (
-              <button
-                key={arch.type}
-                onClick={() => setSelectedArchetype(arch.type)}
-                className={`px-2.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap ${
-                  isActive
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30 scale-102 ring-1 ring-white/20 font-bold'
-                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                }`}
-                title={`Show all ${arch.type} commercial sites & competitor network across the whole map`}
-              >
-                <span>{arch.icon}</span>
-                <span>{arch.label}</span>
-              </button>
-            );
-          })}
-
-          <div className="h-4 w-px bg-white/20 mx-1 hidden md:block" />
-
-          {/* Spatial Analytics Mode (H3 vs Gi* vs DBSCAN) */}
-          <div className="hidden md:flex items-center gap-1 p-0.5 rounded-xl bg-white/5 border border-white/10">
+        {ARCHETYPES.map((arch) => {
+          const isActive = selectedArchetype === arch.type;
+          return (
             <button
-              onClick={() => setSpatialAlgorithm('h3')}
-              className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                spatialAlgorithm === 'h3' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              key={arch.type}
+              onClick={() => setSelectedArchetype(arch.type)}
+              className={`px-2.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap ${
+                isActive
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30 scale-102 ring-1 ring-white/20 font-bold'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
               }`}
-              title="H3 Hexagonal Opportunity Grid"
+              title={`Show all ${arch.type} commercial sites & competitor network across the whole map`}
             >
-              H3 Grid
+              <span>{arch.icon}</span>
+              <span>{arch.label}</span>
             </button>
-            <button
-              onClick={() => setSpatialAlgorithm('gi_star')}
-              className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                spatialAlgorithm === 'gi_star' ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-              }`}
-              title="Getis-Ord Gi* Statistical Hotspots"
-            >
-              Gi* Hotspots
-            </button>
-            <button
-              onClick={() => setSpatialAlgorithm('dbscan')}
-              className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                spatialAlgorithm === 'dbscan' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-              }`}
-              title="DBSCAN Density Clusters"
-            >
-              DBSCAN
-            </button>
-          </div>
+          );
+        })}
 
-          {/* Radial Distance Buffers Toggle */}
+        <div className="h-4 w-px bg-white/20 mx-1 hidden md:block" />
+
+        {/* Spatial Analytics Mode (H3 vs Gi* vs DBSCAN) */}
+        <div className="hidden md:flex items-center gap-1 p-0.5 rounded-xl bg-white/5 border border-white/10">
           <button
-            onClick={() => setShowRadialBuffers(!showRadialBuffers)}
-            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 ${
-              showRadialBuffers
-                ? 'bg-rose-600 text-white shadow-md'
-                : 'text-slate-300 hover:bg-white/10 hover:text-white'
+            onClick={() => setSpatialAlgorithm('h3')}
+            className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+              spatialAlgorithm === 'h3' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
             }`}
-            title="Toggle 1km, 3km, 5km Concentric Distance Buffers"
+            title="H3 Hexagonal Opportunity Grid"
           >
-            <span>🎯</span>
-            <span className="hidden sm:inline">1/3/5km Buffers</span>
+            H3 Grid
           </button>
-
-          {/* Hide/Collapse Capsules Button */}
           <button
-            onClick={() => setShowOptionCapsules(false)}
-            className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors ml-0.5 cursor-pointer"
-            title="Minimize options bar"
+            onClick={() => setSpatialAlgorithm('gi_star')}
+            className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+              spatialAlgorithm === 'gi_star' ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+            title="Getis-Ord Gi* Statistical Hotspots"
           >
-            <X className="w-3.5 h-3.5" />
+            Gi* Hotspots
+          </button>
+          <button
+            onClick={() => setSpatialAlgorithm('dbscan')}
+            className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+              spatialAlgorithm === 'dbscan' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+            title="DBSCAN Density Clusters"
+          >
+            DBSCAN
           </button>
         </div>
-      ) : (
+
+        {/* Radial Distance Buffers Toggle */}
         <button
-          onClick={() => setShowOptionCapsules(true)}
-          className="absolute top-16 left-4 z-20 px-3 py-1.5 rounded-xl bg-black/80 hover:bg-black/90 backdrop-blur-xl border border-white/10 text-slate-200 hover:text-white text-xs font-semibold shadow-xl transition-all cursor-pointer flex items-center gap-1.5 pointer-events-auto"
-          title="Show archetype & spatial algorithm options"
+          onClick={() => setShowRadialBuffers(!showRadialBuffers)}
+          className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+            showRadialBuffers
+              ? 'bg-rose-600 text-white shadow-md'
+              : 'text-slate-300 hover:bg-white/10 hover:text-white'
+          }`}
+          title="Toggle 1km, 3km, 5km Concentric Distance Buffers"
         >
           <span>🎯</span>
-          <span>Archetype & Layers</span>
+          <span className="hidden sm:inline">1/3/5km Buffers</span>
         </button>
+      </div>
       )}
 
       {/* Top Right: Controls HUD */}
@@ -1614,7 +1605,7 @@ export const MapView: React.FC<MapViewProps> = ({
       )}
 
       {/* Candidate Site Slide-In Inspection Drawer (per Docs/12_MAP_INTERACTION_SPEC.md) */}
-      {inspectedCandidateSite && (
+      {!hideCandidateDrawer && inspectedCandidateSite && (
         <div className="absolute top-28 right-4 z-30 max-w-sm w-full p-4 rounded-3xl bg-[#090d1f]/95 backdrop-blur-2xl border border-indigo-500/40 text-white shadow-2xl animate-in slide-in-from-right">
           <div className="flex items-start justify-between mb-3">
             <div>
