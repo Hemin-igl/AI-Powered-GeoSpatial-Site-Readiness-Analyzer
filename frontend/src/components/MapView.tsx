@@ -377,27 +377,33 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [selectedSite]);
 
+  // Dynamic active focus coordinates tracking inspected candidate site, pinned point, selected site, or active city
+  const activeTargetLocation = useMemo<{ lat: number; lng: number }>(() => {
+    if (inspectedCandidateSite) return { lat: inspectedCandidateSite.lat, lng: inspectedCandidateSite.lng };
+    if (inspectedSite) return { lat: inspectedSite.lat, lng: inspectedSite.lng };
+    if (selectedSite) return { lat: selectedSite.lat, lng: selectedSite.lng };
+    if (activeCity) return { lat: activeCity.lat, lng: activeCity.lng };
+    if (sites.length > 0) return { lat: sites[0].lat, lng: sites[0].lng };
+    return { lat: 21.1702, lng: 72.8311 };
+  }, [inspectedCandidateSite, inspectedSite, selectedSite, activeCity, sites]);
+
   // Compute active focus coordinates
   const defaultCenter = useMemo<[number, number]>(() => {
-    if (selectedSite) return [selectedSite.lng, selectedSite.lat];
-    if (activeCity) return [activeCity.lng, activeCity.lat];
-    if (sites.length > 0) return [sites[0].lng, sites[0].lat];
-    return [72.8311, 21.1702];
-  }, [selectedSite, activeCity, sites]);
+    return [activeTargetLocation.lng, activeTargetLocation.lat];
+  }, [activeTargetLocation]);
 
-  // Generate real-world commercial competitors across the whole map for the selected archetype
+  // Generate real-world commercial competitors across the whole map for the selected archetype dynamically at target coordinates
   const activeCompetitors = useMemo<CompetitorPoint[]>(() => {
-    const centerLat = selectedSite ? selectedSite.lat : (sites[0]?.lat ?? defaultCenter[1]);
-    const centerLng = selectedSite ? selectedSite.lng : (sites[0]?.lng ?? defaultCenter[0]);
-    return generateRealWorldCompetitors(centerLat, centerLng, selectedArchetype);
-  }, [selectedSite, sites, defaultCenter, selectedArchetype]);
+    return generateRealWorldCompetitors(activeTargetLocation.lat, activeTargetLocation.lng, selectedArchetype);
+  }, [activeTargetLocation.lat, activeTargetLocation.lng, selectedArchetype]);
 
-  // Merge dynamic H3 grid if array is empty
+  // Merge dynamic H3 grid around active target coordinates
   const activeH3Cells = useMemo<H3CellData[]>(() => {
-    if (h3Cells.length > 0) return h3Cells;
-    const center = selectedSite || (sites.length > 0 ? sites[0] : { lat: defaultCenter[1], lng: defaultCenter[0] });
-    return generateH3GridAround(center.lat, center.lng);
-  }, [h3Cells, selectedSite, sites, defaultCenter]);
+    if (h3Cells.length > 0 && !inspectedCandidateSite && !inspectedSite && !selectedSite) {
+      return h3Cells;
+    }
+    return generateH3GridAround(activeTargetLocation.lat, activeTargetLocation.lng);
+  }, [h3Cells, activeTargetLocation.lat, activeTargetLocation.lng, inspectedCandidateSite, inspectedSite, selectedSite]);
 
   // 1. Initialize MapLibre Map
   useEffect(() => {
@@ -464,10 +470,11 @@ export const MapView: React.FC<MapViewProps> = ({
         const analyzed = await analyzeSite({
           lat,
           lng,
-          businessType: selectedSite?.businessType || 'Retail Store',
+          businessType: selectedArchetype || selectedSite?.businessType || 'Retail Store',
         });
 
         setInspectedSite(analyzed);
+        setInspectedCandidateSite(analyzed);
         setIsEvaluatingPoint(false);
       } else if (toolMode === 'polygon') {
         // Add vertex to polygon
@@ -562,9 +569,9 @@ export const MapView: React.FC<MapViewProps> = ({
   const updateMapLayers = useCallback((map: MapLibreMap) => {
     if (!map.isStyleLoaded()) return;
 
-    const centerLat = selectedSite ? selectedSite.lat : (sites[0]?.lat ?? defaultCenter[1]);
-    const centerLng = selectedSite ? selectedSite.lng : (sites[0]?.lng ?? defaultCenter[0]);
-    const targetSite = selectedSite || (sites.length > 0 ? sites[0] : null);
+    const centerLat = activeTargetLocation.lat;
+    const centerLng = activeTargetLocation.lng;
+    const targetSite = inspectedCandidateSite || inspectedSite || selectedSite || (sites.length > 0 ? sites[0] : null);
 
     // --- A. LAND USE & ZONING LAYER ---
     const landUseActive = layers.find((l) => l.id === 'land_use')?.active ?? true;
@@ -1120,6 +1127,9 @@ export const MapView: React.FC<MapViewProps> = ({
       map.setLayoutProperty('radial-buffers-stroke', 'visibility', showRadialBuffers ? 'visible' : 'none');
     }
   }, [
+    activeTargetLocation,
+    inspectedCandidateSite,
+    inspectedSite,
     selectedSite,
     sites,
     showIsochrones,
@@ -1131,6 +1141,7 @@ export const MapView: React.FC<MapViewProps> = ({
     activeCompetitors,
     onSelectHexCell,
     defaultCenter,
+    selectedArchetype,
   ]);
 
   // 6. Update GeoJSON layers on state changes and listen to style changes
@@ -1194,6 +1205,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
+        setInspectedCandidateSite(site);
         onSelectSite(site);
       });
 
