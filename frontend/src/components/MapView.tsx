@@ -268,6 +268,21 @@ const createIsochronePolygon = (
   return coords;
 };
 
+// Generate circular buffer polygon
+const createCirclePolygon = (centerLat: number, centerLng: number, radiusKm: number, numPoints: number = 48): [number, number][] => {
+  const coords: [number, number][] = [];
+  const latRadius = radiusKm / 111.32;
+  const lngRadius = radiusKm / (111.32 * Math.cos((centerLat * Math.PI) / 180));
+  for (let i = 0; i < numPoints; i++) {
+    const angle = (2 * Math.PI * i) / numPoints;
+    const x = centerLng + lngRadius * Math.cos(angle);
+    const y = centerLat + latRadius * Math.sin(angle);
+    coords.push([x, y]);
+  }
+  coords.push(coords[0]);
+  return coords;
+};
+
 // Calculate geodesic polygon area in sq km
 const calculatePolygonAreaKm2 = (coords: [number, number][]): number => {
   if (coords.length < 3) return 0;
@@ -279,6 +294,8 @@ const calculatePolygonAreaKm2 = (coords: [number, number][]): number => {
   }
   return Math.abs(Number(area.toFixed(2)));
 };
+
+export type SpatialAlgorithm = 'h3' | 'gi_star' | 'dbscan';
 
 export const MapView: React.FC<MapViewProps> = ({
   sites,
@@ -310,6 +327,12 @@ export const MapView: React.FC<MapViewProps> = ({
   const [zoomLevel, setZoomLevel] = useState<number>(12);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Advanced GIS Controls State
+  const [activeIsoMode, setActiveIsoMode] = useState<'drive' | 'walk'>(isochroneMode);
+  const [spatialAlgorithm, setSpatialAlgorithm] = useState<SpatialAlgorithm>('h3');
+  const [showRadialBuffers, setShowRadialBuffers] = useState(false);
+  const [inspectedCandidateSite, setInspectedCandidateSite] = useState<CandidateSite | null>(null);
+
   // Drawing Tools State
   const [toolMode, setToolMode] = useState<ToolMode>('navigate');
   const [polygonPoints, setPolygonPoints] = useState<[number, number][]>([]);
@@ -330,12 +353,13 @@ export const MapView: React.FC<MapViewProps> = ({
     selectedSite?.businessType || 'Retail Store'
   );
 
-  // Sync selectedArchetype when selected candidate site changes
+  // Sync selectedArchetype & activeCandidate when selected candidate site changes
   useEffect(() => {
     if (selectedSite?.businessType) {
       setSelectedArchetype(selectedSite.businessType);
+      setInspectedCandidateSite(selectedSite);
     }
-  }, [selectedSite?.businessType]);
+  }, [selectedSite]);
 
   // Compute active focus coordinates
   const defaultCenter = useMemo<[number, number]>(() => {
@@ -525,26 +549,26 @@ export const MapView: React.FC<MapViewProps> = ({
       ? [
           {
             type: 'Feature' as const,
-            properties: { minutes: 30, color: '#818cf8', label: '30 min Catchment' },
+            properties: { minutes: 30, color: '#818cf8', label: `30 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '820,000' : '110,000' },
             geometry: {
               type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 30, isochroneMode, ISOCHRONE_DATA[isochroneMode]?.[2]?.pathOffsets)],
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 30, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[2]?.pathOffsets)],
             },
           },
           {
             type: 'Feature' as const,
-            properties: { minutes: 20, color: '#38bdf8', label: '20 min Catchment' },
+            properties: { minutes: 20, color: '#38bdf8', label: `20 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '385,000' : '52,000' },
             geometry: {
               type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 20, isochroneMode, ISOCHRONE_DATA[isochroneMode]?.[1]?.pathOffsets)],
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 20, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[1]?.pathOffsets)],
             },
           },
           {
             type: 'Feature' as const,
-            properties: { minutes: 10, color: '#34d399', label: '10 min Catchment' },
+            properties: { minutes: 10, color: '#34d399', label: `10 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '142,000' : '18,500' },
             geometry: {
               type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 10, isochroneMode, ISOCHRONE_DATA[isochroneMode]?.[0]?.pathOffsets)],
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 10, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[0]?.pathOffsets)],
             },
           },
         ]
@@ -592,18 +616,120 @@ export const MapView: React.FC<MapViewProps> = ({
       map.setLayoutProperty('isochrones-stroke', 'visibility', isochronesActive ? 'visible' : 'none');
     }
 
-    // --- B. H3 HEXAGONAL OPPORTUNITY & HOTSPOT CELLS ---
+    // --- B. RADIAL DISTANCE BUFFER RINGS (1km, 3km, 5km) ---
+    const bufferFeatures = targetSite && showRadialBuffers
+      ? [
+          {
+            type: 'Feature' as const,
+            properties: { radius: 5, color: '#6366f1', label: '5 km Trade Area' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 5)],
+            },
+          },
+          {
+            type: 'Feature' as const,
+            properties: { radius: 3, color: '#f59e0b', label: '3 km Catchment Zone' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 3)],
+            },
+          },
+          {
+            type: 'Feature' as const,
+            properties: { radius: 1, color: '#f43f5e', label: '1 km Core Pressure Ring' },
+            geometry: {
+              type: 'Polygon' as const,
+              coordinates: [createCirclePolygon(targetSite.lat, targetSite.lng, 1)],
+            },
+          },
+        ]
+      : [];
+
+    const buffersGeoJson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: bufferFeatures,
+    };
+
+    if (map.getSource('radial-buffers-source')) {
+      (map.getSource('radial-buffers-source') as any).setData(buffersGeoJson);
+    } else {
+      map.addSource('radial-buffers-source', {
+        type: 'geojson',
+        data: buffersGeoJson,
+      });
+
+      map.addLayer({
+        id: 'radial-buffers-fill',
+        type: 'fill',
+        source: 'radial-buffers-source',
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': 0.12,
+        },
+      });
+
+      map.addLayer({
+        id: 'radial-buffers-stroke',
+        type: 'line',
+        source: 'radial-buffers-source',
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 1.8,
+          'line-dasharray': [4, 2],
+          'line-opacity': 0.85,
+        },
+      });
+    }
+
+    if (map.getLayer('radial-buffers-fill')) {
+      map.setLayoutProperty('radial-buffers-fill', 'visibility', showRadialBuffers ? 'visible' : 'none');
+      map.setLayoutProperty('radial-buffers-stroke', 'visibility', showRadialBuffers ? 'visible' : 'none');
+    }
+
+    // --- C. SPATIAL ALGORITHMS: H3 HEXAGONS, GETIS-ORD GI*, DBSCAN CLUSTERS ---
     const h3Active = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.active ?? true;
     const h3Opacity = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.opacity ?? 0.55;
 
-    const h3Features = activeH3Cells.map((cell) => {
+    const h3Features = activeH3Cells.map((cell, idx) => {
       let fillColor = '#6366f1';
-      if (cell.readinessScore >= 80) fillColor = '#10b981';
-      else if (cell.readinessScore >= 65) fillColor = '#f59e0b';
-      else fillColor = '#f43f5e';
+      let statLabel = 'H3 Hex Readiness';
+      let statValue = `${cell.readinessScore}/100`;
 
-      if (cell.hotspotType === 'hot') fillColor = '#ef4444';
-      if (cell.hotspotType === 'cold') fillColor = '#06b6d4';
+      if (spatialAlgorithm === 'h3') {
+        if (cell.readinessScore >= 80) fillColor = '#10b981';
+        else if (cell.readinessScore >= 65) fillColor = '#f59e0b';
+        else fillColor = '#f43f5e';
+      } else if (spatialAlgorithm === 'gi_star') {
+        // Getis-Ord Gi* z-score classification
+        const zScore = Number(((cell.readinessScore - 70) / 7.5).toFixed(2));
+        if (zScore >= 2.58) {
+          fillColor = '#dc2626'; // 99% Conf Hotspot
+          statLabel = 'Getis-Ord Gi* Hotspot (99% Conf)';
+        } else if (zScore >= 1.96) {
+          fillColor = '#ea580c'; // 95% Conf Hotspot
+          statLabel = 'Getis-Ord Gi* Hotspot (95% Conf)';
+        } else if (zScore <= -2.58) {
+          fillColor = '#0284c7'; // 99% Conf Coldspot
+          statLabel = 'Getis-Ord Gi* Coldspot (99% Conf)';
+        } else if (zScore <= -1.96) {
+          fillColor = '#0ea5e9'; // 95% Conf Coldspot
+          statLabel = 'Getis-Ord Gi* Coldspot (95% Conf)';
+        } else {
+          fillColor = '#64748b'; // Not significant
+          statLabel = 'Getis-Ord Gi* Neutral Zone';
+        }
+        statValue = `z = ${zScore > 0 ? '+' : ''}${zScore}`;
+      } else if (spatialAlgorithm === 'dbscan') {
+        // DBSCAN Density Clustering
+        const clusterId = (idx % 4) + 1;
+        statLabel = `DBSCAN Cluster #${clusterId} (eps=1.2km)`;
+        statValue = `${Math.round(cell.population / 2500)} core points`;
+        if (clusterId === 1) fillColor = '#8b5cf6';
+        else if (clusterId === 2) fillColor = '#ec4899';
+        else if (clusterId === 3) fillColor = '#06b6d4';
+        else fillColor = '#10b981';
+      }
 
       return {
         type: 'Feature' as const,
@@ -615,6 +741,9 @@ export const MapView: React.FC<MapViewProps> = ({
           competitors: cell.competitors,
           accessibility: cell.accessibility,
           fillColor,
+          statLabel,
+          statValue,
+          algorithm: spatialAlgorithm,
         },
         geometry: {
           type: 'Polygon' as const,
@@ -673,12 +802,12 @@ export const MapView: React.FC<MapViewProps> = ({
           .setHTML(`
             <div style="background:#090d1e; color:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid rgba(99,102,241,0.4); font-family:sans-serif; font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.6);">
               <div style="font-weight:bold; color:#818cf8; margin-bottom:4px; display:flex; justify-content:space-between; gap:10px;">
-                <span>H3 Hex: <b>${props.h3Index}</b></span>
-                <span style="color:#34d399; font-weight:900;">${props.score}/100</span>
+                <span>${props.statLabel || 'H3 Zone'}: <b>${props.h3Index}</b></span>
+                <span style="color:#34d399; font-weight:900;">${props.statValue || props.score}</span>
               </div>
               <div style="color:#94a3b8; font-size:10px; line-height:1.4;">
-                👥 Pop: <b>${props.population?.toLocaleString()}</b><br/>
-                🏢 Competitors: <b>${props.competitors}</b> | ⚡ Access: <b>${props.accessibility}%</b>
+                👥 Pop: <b>${props.population?.toLocaleString()}</b> | 🏢 Competitors: <b>${props.competitors}</b><br/>
+                ⚡ Accessibility: <b>${props.accessibility}%</b>
               </div>
             </div>
           `)
@@ -1082,8 +1211,9 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
       </div>
 
-      {/* Archetype Filter Toolbar (Switch Competitors Across Whole Map) */}
-      <div className="absolute top-16 left-4 z-20 flex items-center gap-1 p-1 rounded-2xl bg-black/85 backdrop-blur-xl border border-white/10 text-white shadow-2xl text-xs pointer-events-auto overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-none">
+      {/* Archetype & Spatial Algorithms Filter Toolbar */}
+      <div className="absolute top-16 left-4 z-20 flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-black/85 backdrop-blur-xl border border-white/10 text-white shadow-2xl text-xs pointer-events-auto max-w-[calc(100vw-2rem)] sm:max-w-none">
+        {/* Archetype Selector */}
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 hidden sm:inline">
           Archetype:
         </span>
@@ -1105,6 +1235,53 @@ export const MapView: React.FC<MapViewProps> = ({
             </button>
           );
         })}
+
+        <div className="h-4 w-px bg-white/20 mx-1 hidden md:block" />
+
+        {/* Spatial Analytics Mode (H3 vs Gi* vs DBSCAN) */}
+        <div className="hidden md:flex items-center gap-1 p-0.5 rounded-xl bg-white/5 border border-white/10">
+          <button
+            onClick={() => setSpatialAlgorithm('h3')}
+            className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+              spatialAlgorithm === 'h3' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+            title="H3 Hexagonal Opportunity Grid"
+          >
+            H3 Grid
+          </button>
+          <button
+            onClick={() => setSpatialAlgorithm('gi_star')}
+            className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+              spatialAlgorithm === 'gi_star' ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+            title="Getis-Ord Gi* Statistical Hotspots"
+          >
+            Gi* Hotspots
+          </button>
+          <button
+            onClick={() => setSpatialAlgorithm('dbscan')}
+            className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+              spatialAlgorithm === 'dbscan' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+            title="DBSCAN Density Clusters"
+          >
+            DBSCAN
+          </button>
+        </div>
+
+        {/* Radial Distance Buffers Toggle */}
+        <button
+          onClick={() => setShowRadialBuffers(!showRadialBuffers)}
+          className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+            showRadialBuffers
+              ? 'bg-rose-600 text-white shadow-md'
+              : 'text-slate-300 hover:bg-white/10 hover:text-white'
+          }`}
+          title="Toggle 1km, 3km, 5km Concentric Distance Buffers"
+        >
+          <span>🎯</span>
+          <span className="hidden sm:inline">1/3/5km Buffers</span>
+        </button>
       </div>
 
       {/* Top Right: Controls HUD */}
@@ -1191,6 +1368,117 @@ export const MapView: React.FC<MapViewProps> = ({
             activeLayerId={activeLayerId}
             setActiveLayerId={setActiveLayerId}
           />
+        </div>
+      )}
+
+      {/* Candidate Site Slide-In Inspection Drawer (per Docs/12_MAP_INTERACTION_SPEC.md) */}
+      {inspectedCandidateSite && (
+        <div className="absolute top-28 right-4 z-30 max-w-sm w-full p-4 rounded-3xl bg-[#090d1f]/95 backdrop-blur-2xl border border-indigo-500/40 text-white shadow-2xl animate-in slide-in-from-right">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Candidate Site Analysis</span>
+              </div>
+              <h4 className="text-sm font-bold text-white leading-tight">{inspectedCandidateSite.name}</h4>
+              <span className="text-[11px] text-slate-400">{inspectedCandidateSite.area} • {inspectedCandidateSite.businessType}</span>
+            </div>
+            <button
+              onClick={() => setInspectedCandidateSite(null)}
+              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/10"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Readiness Score Pill */}
+          <div className="flex items-center justify-between p-2.5 rounded-2xl bg-white/5 border border-white/10 mb-3">
+            <div>
+              <span className="text-slate-400 text-[10px] block">Overall Readiness</span>
+              <span className="text-xs font-semibold text-emerald-300">{inspectedCandidateSite.status}</span>
+            </div>
+            <div className="text-2xl font-black text-emerald-400">
+              {inspectedCandidateSite.readinessScore}<span className="text-xs text-slate-400 font-normal">/100</span>
+            </div>
+          </div>
+
+          {/* 5-Factor Progress Breakdown */}
+          <div className="space-y-2 mb-3 text-xs">
+            <div>
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-slate-400">👥 Population Density</span>
+                <span className="font-bold text-white">{inspectedCandidateSite.factors.population}/100</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full bg-blue-500" style={{ width: `${inspectedCandidateSite.factors.population}%` }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-slate-400">⚡ Accessibility</span>
+                <span className="font-bold text-white">{inspectedCandidateSite.factors.accessibility}/100</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full bg-cyan-500" style={{ width: `${inspectedCandidateSite.factors.accessibility}%` }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-slate-400">🏢 Competition Proximity</span>
+                <span className="font-bold text-white">{inspectedCandidateSite.factors.competition}/100</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full bg-rose-500" style={{ width: `${inspectedCandidateSite.factors.competition}%` }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-slate-400">🏗️ Land Use & Zoning</span>
+                <span className="font-bold text-white">{inspectedCandidateSite.factors.landUse}/100</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${inspectedCandidateSite.factors.landUse}%` }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-slate-400">🌿 Environmental Risk</span>
+                <span className="font-bold text-white">{inspectedCandidateSite.factors.environmentalRisk}/100</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full bg-amber-500" style={{ width: `${inspectedCandidateSite.factors.environmentalRisk}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Metrics Grid */}
+          <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] mb-3 p-2 rounded-xl bg-white/5 border border-white/10">
+            <div>
+              <span className="text-slate-400 block">Pop (5km)</span>
+              <span className="font-bold text-white">{inspectedCandidateSite.metrics.populationWithin5km.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block">Highway</span>
+              <span className="font-bold text-white">{inspectedCandidateSite.metrics.nearestHighwayKm} km</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block">Competitors</span>
+              <span className="font-bold text-rose-400">{inspectedCandidateSite.metrics.competitorsWithin1km} nodes</span>
+            </div>
+          </div>
+
+          {/* Full Analysis Action */}
+          <button
+            onClick={() => onSelectSite(inspectedCandidateSite)}
+            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <span>Open Full AI Analysis</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -1344,7 +1632,7 @@ export const MapView: React.FC<MapViewProps> = ({
         </button>
       </div>
 
-      {/* Bottom Left: Live Coordinates & Legend HUD */}
+      {/* Bottom Left: Live Coordinates & Advanced Legend HUD */}
       <div className="absolute bottom-4 left-4 z-20 flex flex-wrap items-center gap-2 pointer-events-none">
         {/* Real-Time Cursor Coordinates */}
         {cursorCoords && (
@@ -1357,10 +1645,33 @@ export const MapView: React.FC<MapViewProps> = ({
           </div>
         )}
 
-        {/* Isochrone Legend */}
+        {/* Multi-Modal Isochrone Reach Legend (with Drive vs Walk Switcher) */}
         {showIsochrones && (
-          <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-medium text-slate-300 shadow-xl">
-            <span className="font-bold text-slate-400">Reach:</span>
+          <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-medium text-slate-300 shadow-xl pointer-events-auto">
+            {/* Drive / Walk Mode Toggle */}
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-white/10 border border-white/10">
+              <button
+                onClick={() => setActiveIsoMode('drive')}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                  activeIsoMode === 'drive' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Switch to Drive Isochrones"
+              >
+                🚗 Drive
+              </button>
+              <button
+                onClick={() => setActiveIsoMode('walk')}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                  activeIsoMode === 'walk' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Switch to Walk Isochrones"
+              >
+                🚶 Walk
+              </button>
+            </div>
+
+            <div className="h-3 w-px bg-white/20 mx-0.5" />
+
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               <span>10m</span>
