@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Bot } from 'lucide-react';
 import { BusinessType, CandidateSite, MapLayerConfig } from './types';
-import { CITIES, CITY_DATA, DEFAULT_MAP_LAYERS } from './data/mockData';
+import { CITIES, CITY_DATA, DEFAULT_MAP_LAYERS, DEFAULT_CANDIDATE_SITES } from './data/mockData';
 import { City } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
@@ -27,31 +27,6 @@ import { RiskAnalysisPage } from './pages/RiskAnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { analyzeSite } from './services/gisService';
 
-const CLEAN_INITIAL_SITE: CandidateSite = {
-  id: 'new-site-init',
-  name: 'Candidate Location',
-  area: 'Custom Target Location',
-  lat: 21.1702,
-  lng: 72.8311,
-  businessType: 'Retail Store',
-  readinessScore: 0,
-  status: 'Needs Review',
-  factors: { population: 0, accessibility: 0, competition: 0, landUse: 0, environmentalRisk: 0 },
-  metrics: {
-    populationWithin5km: 0,
-    populationDensity: 0,
-    nearestHighwayKm: 0,
-    nearestMajorRoadMeters: 0,
-    competitorsWithin1km: 0,
-    competitorsWithin3km: 0,
-    competitorsWithin5km: 0,
-    medianIncomeMonthly: 0,
-    zoningCode: 'Pending Evaluation',
-    floodRiskLevel: 'Low',
-  },
-  summary: 'Enter coordinates and click Run Analysis to evaluate this location using the GIS backend engine.',
-};
-
 export default function App() {
   const [showIntroPage, setShowIntroPage] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -61,17 +36,17 @@ export default function App() {
   const [activeCity, setActiveCity] = useState<City>(CITIES[0]);
   const activeCityData = CITY_DATA[activeCity.id] || {
     city: activeCity,
-    candidateSites: [],
+    candidateSites: DEFAULT_CANDIDATE_SITES,
     competitors: [],
     h3Cells: [],
-    demographics: { totalMetropolitanPopulation: 0, averageDensityPerSqKm: 0, medianMonthlyIncomeINR: 0, activeHouseholds: 0, ageDistribution: [], incomeBrackets: [] },
+    demographics: { totalMetropolitanPopulation: 4850000, averageDensityPerSqKm: 14200, medianMonthlyIncomeINR: 64000, activeHouseholds: 1180000, ageDistribution: [], incomeBrackets: [] },
     opportunityZones: [],
     riverCoordinates: [],
     roads: [],
   };
 
-  const [sites, setSites] = useState<CandidateSite[]>([]);
-  const [selectedSite, setSelectedSite] = useState<CandidateSite>(CLEAN_INITIAL_SITE);
+  const [sites, setSites] = useState<CandidateSite[]>(DEFAULT_CANDIDATE_SITES);
+  const [selectedSite, setSelectedSite] = useState<CandidateSite>(DEFAULT_CANDIDATE_SITES[0]);
   const [layers, setLayers] = useState<MapLayerConfig[]>(DEFAULT_MAP_LAYERS);
   const [comparisonSiteIds, setComparisonSiteIds] = useState<string[]>([]);
 
@@ -80,6 +55,11 @@ export default function App() {
     const newCity = CITIES.find(c => c.id === cityId);
     if (!newCity) return;
     setActiveCity(newCity);
+    const cData = CITY_DATA[newCity.id];
+    if (cData && cData.candidateSites.length > 0) {
+      setSites(cData.candidateSites);
+      setSelectedSite(cData.candidateSites[0]);
+    }
     setActiveTab('overview');
   };
 
