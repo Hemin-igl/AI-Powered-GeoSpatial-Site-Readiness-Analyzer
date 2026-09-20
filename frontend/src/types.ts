@@ -78,6 +78,11 @@ export interface H3CellData {
   opportunityLevel: 'High' | 'Medium' | 'Low';
   hotspotType?: 'hot' | 'cold' | 'neutral';
   clusterId?: number;
+  zScore?: number;
+  giBin?: number;
+  pValue?: number;
+  dbscanClusterName?: string;
+  dbscanDensity?: number;
 }
 
 export interface CompetitorPoint {

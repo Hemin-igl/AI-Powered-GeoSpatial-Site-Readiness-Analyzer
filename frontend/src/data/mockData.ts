@@ -46,8 +46,8 @@ export const DEFAULT_MAP_LAYERS: MapLayerConfig[] = [
   { id: 'competitors', name: 'Competitors', category: 'analysis', active: true, opacity: 0.90, featureCount: 105, lastUpdated: 'Live Feed', color: '#f43f5e', description: 'Direct and adjacent commercial competitors scraped from spatial registries.' },
   { id: 'land_use', name: 'Land Use', category: 'core', active: true, opacity: 0.65, featureCount: 420, lastUpdated: 'Live Feed', color: '#10b981', description: 'Municipal zoning plans, commercial plots, setbacks, and building footprints.' },
   { id: 'risk_zones', name: 'Risk Zones', category: 'risk', active: true, opacity: 0.60, featureCount: 68, lastUpdated: 'Live Feed', color: '#f59e0b', description: 'Environmental and operational risk areas (e.g. flood plain buffer zones).' },
-  { id: 'h3_grid', name: 'H3 Grid', category: 'analysis', active: false, opacity: 0.70, featureCount: 132, lastUpdated: 'Spatial Index', color: '#8b5cf6', description: 'Uber H3 Resolution 8 spatial tessellation with indexed readiness indices.' },
-  { id: 'hotspots', name: 'DBSCAN Hotspots', category: 'analysis', active: false, opacity: 0.80, featureCount: 14, lastUpdated: 'On-demand', color: '#ec4899', description: 'Auto-clustered spatial hotspots identifying agglomeration economies.' },
+  { id: 'h3_grid', name: 'H3 Grid', category: 'analysis', active: true, opacity: 0.65, featureCount: 185, lastUpdated: 'Spatial Index', color: '#8b5cf6', description: 'Uber H3 Resolution 8 spatial tessellation with indexed readiness indices.' },
+  { id: 'hotspots', name: 'DBSCAN Hotspots', category: 'analysis', active: true, opacity: 0.75, featureCount: 185, lastUpdated: 'On-demand', color: '#ec4899', description: 'Auto-clustered spatial hotspots identifying agglomeration economies.' },
 ];
 
 // Clean City Data Generator (zero hardcoded mock sites on open)

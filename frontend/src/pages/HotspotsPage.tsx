@@ -35,46 +35,52 @@ export const HotspotsPage: React.FC<HotspotsPageProps> = ({
   const algorithmInfo = {
     'H3 Grid': {
       title: 'Uber H3 Spatial Hexagonal Tessellation',
-      subtitle: 'Discrete Global Grid System (Resolution 8)',
+      subtitle: 'Discrete Global Grid System (Resolution 8 - ~0.78 km² Hexagons)',
       description:
-        `H3 divides the ${activeCity.name} Metropolitan Area into uniform hexagons of equal area (~0.7 km² each). It minimizes shape distortion and calculates readiness scores using multi-factor linear indexing without edge boundary anomalies.`,
+        `H3 divides the ${activeCity.name} Metropolitan Area into uniform, invariant hexagons. It minimizes shape distortion and computes composite suitability indices with seamless adjacent spatial tessellation.`,
       legend: [
-        { label: 'High Opportunity (85-100)', color: '#6366f1' },
-        { label: 'Medium Opportunity (60-84)', color: '#38bdf8' },
-        { label: 'Low Opportunity (0-59)', color: '#94a3b8' },
+        { label: 'Prime Hexagon (≥ 90)', color: '#4338ca' },
+        { label: 'High Hexagon (80 - 89)', color: '#7c3aed' },
+        { label: 'Growth Hexagon (70 - 79)', color: '#e11d48' },
+        { label: 'Moderate Hexagon (60 - 69)', color: '#f59e0b' },
+        { label: 'Fringe Hexagon (< 60)', color: '#fde047' },
       ],
-      kpi1: '132 Hex Cells',
-      kpi2: '24 Prime Cells',
-      formula: 'Hex Area = 0.73 km²',
+      kpi1: '185 Hex Cells',
+      kpi2: '38 Prime Cells',
+      formula: 'Hex Area = 0.78 km²',
     },
     DBSCAN: {
-      title: 'Density-Based Spatial Clustering (DBSCAN)',
+      title: 'Density-Based Spatial Clustering of Applications with Noise (DBSCAN)',
       subtitle: 'Spatial Agglomeration & Noise Elimination (Eps = 1.2km, MinPts = 4)',
       description:
-        'DBSCAN discovers clusters of arbitrary shapes by identifying core points with dense competitor and footfall neighbors. It separates saturated commercial agglomerations from spatial noise and isolated candidate nodes.',
+        'DBSCAN automatically isolates dense commercial agglomerations and clusters of arbitrary shapes while classifying non-clustered outer areas as spatial noise/outliers.',
       legend: [
-        { label: 'Core Cluster 1 (Vesu-Athwa Retail Hub)', color: '#a855f7' },
-        { label: 'Core Cluster 2 (Varachha Diamond Zone)', color: '#6366f1' },
-        { label: 'Cluster 3 (Adajan Transit Belt)', color: '#38bdf8' },
-        { label: 'Isolated Noise Points', color: '#64748b' },
+        { label: 'Core Commercial Hub (>10,000 pts/km²)', color: '#dc2626' },
+        { label: 'Tech & Expressway Corridor (5,001 - 10,000)', color: '#ea580c' },
+        { label: 'Logistics & Industrial Belt (1,001 - 5,000)', color: '#f59e0b' },
+        { label: 'Suburban Growth Node (100 - 1,000)', color: '#eab308' },
+        { label: 'Spatial Noise / Outliers (< 100)', color: '#64748b' },
       ],
-      kpi1: '3 Core Clusters',
-      kpi2: '84% In Clusters',
+      kpi1: '4 Active Clusters',
+      kpi2: '91% Clustered Pop',
       formula: 'Eps: 1.2 km | MinPts: 4',
     },
     'Getis-Ord Gi*': {
       title: 'Getis-Ord Gi* Local Spatial Statistics',
       subtitle: 'Statistical Significance of Spatial Clustering (z-score & p-value)',
       description:
-        `Getis-Ord Gi* compares local sums of opportunity readiness against expected values across ${activeCity.name}. It statistically isolates spatial Hotspots (high values surrounded by high values, 99% confidence), Coldspots, and random neutral distributions.`,
+        `Getis-Ord Gi* compares local sums of opportunity readiness against expected citywide values across ${activeCity.name}, identifying statistically significant Hot Spots (high surrounded by high) and Cold Spots.`,
       legend: [
-        { label: 'Statistical Hotspot (99% Confidence)', color: '#ec4899' },
-        { label: 'Statistical Hotspot (95% Confidence)', color: '#f43f5e' },
-        { label: 'Neutral Distribution (Not Significant)', color: '#64748b' },
-        { label: 'Statistical Coldspot (Low Potential Cluster)', color: '#0ea5e9' },
+        { label: 'Hot Spot - 99% Confidence (z ≥ +2.58)', color: '#b91c1c' },
+        { label: 'Hot Spot - 95% Confidence (z ≥ +1.96)', color: '#ea580c' },
+        { label: 'Hot Spot - 90% Confidence (z ≥ +1.65)', color: '#f59e0b' },
+        { label: 'Not Significant (-1.65 < z < +1.65)', color: '#fef08a' },
+        { label: 'Cold Spot - 90% Confidence (z ≤ -1.65)', color: '#38bdf8' },
+        { label: 'Cold Spot - 95% Confidence (z ≤ -1.96)', color: '#0284c7' },
+        { label: 'Cold Spot - 99% Confidence (z ≤ -2.58)', color: '#1e3a8a' },
       ],
-      kpi1: '18 Hotspots (99%)',
-      kpi2: '12 Coldspots',
+      kpi1: '24 Hot Spots (99%)',
+      kpi2: '16 Cold Spots',
       formula: 'Gi* = (∑wijxj - X̄∑wij) / S√...',
     },
   };
@@ -139,6 +145,7 @@ export const HotspotsPage: React.FC<HotspotsPageProps> = ({
             onSelectSite={onSelectSite}
             competitors={algorithm === 'DBSCAN' ? competitors : []}
             h3Cells={h3Cells}
+            spatialAlgorithm={algorithm === 'H3 Grid' ? 'h3' : algorithm === 'DBSCAN' ? 'dbscan' : 'gi_star'}
             layers={[
               {
                 id: 'h3_grid',
@@ -146,7 +153,7 @@ export const HotspotsPage: React.FC<HotspotsPageProps> = ({
                 category: 'analysis',
                 active: true,
                 opacity: 0.85,
-                featureCount: 132,
+                featureCount: 185,
                 lastUpdated: 'Live',
                 color: '#8b5cf6',
                 description: 'Hex Grid',

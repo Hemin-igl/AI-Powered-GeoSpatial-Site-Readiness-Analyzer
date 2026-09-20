@@ -214,19 +214,21 @@ interface MapViewProps {
   onChangeOpacity?: (layerId: string, opacity: number) => void;
   showIsochrones?: boolean;
   isochroneMode?: 'drive' | 'walk';
+  spatialAlgorithm?: SpatialAlgorithm;
   onSelectHexCell?: (cell: H3CellData) => void;
   onAddNewSite?: (site: CandidateSite) => void;
   className?: string;
 }
 
-// Generate regular hexagon coordinates for H3 visual representation
-const createHexagonPolygon = (lat: number, lng: number, radiusKm: number = 0.38): [number, number][] => {
+// Generate regular pointy-topped hexagon coordinates for H3 visual representation
+const createHexagonPolygon = (lat: number, lng: number, radiusKm: number = 0.55): [number, number][] => {
   const coords: [number, number][] = [];
   const latRadius = radiusKm / 111.32;
   const lngRadius = radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180));
 
   for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i - Math.PI / 6;
+    // Pointy-topped vertices: 30°, 90°, 150°, 210°, 270°, 330°
+    const angle = (Math.PI / 3) * i + Math.PI / 6;
     const x = lng + lngRadius * Math.cos(angle);
     const y = lat + latRadius * Math.sin(angle);
     coords.push([x, y]);
@@ -308,6 +310,7 @@ export const MapView: React.FC<MapViewProps> = ({
   onChangeOpacity = () => {},
   showIsochrones = true,
   isochroneMode = 'drive',
+  spatialAlgorithm: propSpatialAlgorithm,
   onSelectHexCell,
   onAddNewSite,
   className = 'h-[540px]',
@@ -329,7 +332,14 @@ export const MapView: React.FC<MapViewProps> = ({
 
   // Advanced GIS Controls State
   const [activeIsoMode, setActiveIsoMode] = useState<'drive' | 'walk'>(isochroneMode);
-  const [spatialAlgorithm, setSpatialAlgorithm] = useState<SpatialAlgorithm>('h3');
+  const [spatialAlgorithm, setSpatialAlgorithm] = useState<SpatialAlgorithm>(propSpatialAlgorithm || 'h3');
+
+  // Sync propSpatialAlgorithm changes
+  useEffect(() => {
+    if (propSpatialAlgorithm) {
+      setSpatialAlgorithm(propSpatialAlgorithm);
+    }
+  }, [propSpatialAlgorithm]);
   const [showRadialBuffers, setShowRadialBuffers] = useState(false);
   const [inspectedCandidateSite, setInspectedCandidateSite] = useState<CandidateSite | null>(null);
 
@@ -689,46 +699,114 @@ export const MapView: React.FC<MapViewProps> = ({
 
     // --- C. SPATIAL ALGORITHMS: H3 HEXAGONS, GETIS-ORD GI*, DBSCAN CLUSTERS ---
     const h3Active = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.active ?? true;
-    const h3Opacity = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.opacity ?? 0.55;
+    const baseH3Opacity = layers.find((l) => l.id === 'opportunity_heatmap' || l.id === 'h3_hotspots' || l.id === 'h3_grid')?.opacity ?? 0.70;
 
-    const h3Features = activeH3Cells.map((cell, idx) => {
+    const h3Features = activeH3Cells.map((cell) => {
       let fillColor = '#6366f1';
       let statLabel = 'H3 Hex Readiness';
       let statValue = `${cell.readinessScore}/100`;
+      let tagText = 'High Potential';
+      let tagColor = '#10b981';
 
       if (spatialAlgorithm === 'h3') {
-        if (cell.readinessScore >= 80) fillColor = '#10b981';
-        else if (cell.readinessScore >= 65) fillColor = '#f59e0b';
-        else fillColor = '#f43f5e';
-      } else if (spatialAlgorithm === 'gi_star') {
-        // Getis-Ord Gi* z-score classification
-        const zScore = Number(((cell.readinessScore - 70) / 7.5).toFixed(2));
-        if (zScore >= 2.58) {
-          fillColor = '#dc2626'; // 99% Conf Hotspot
-          statLabel = 'Getis-Ord Gi* Hotspot (99% Conf)';
-        } else if (zScore >= 1.96) {
-          fillColor = '#ea580c'; // 95% Conf Hotspot
-          statLabel = 'Getis-Ord Gi* Hotspot (95% Conf)';
-        } else if (zScore <= -2.58) {
-          fillColor = '#0284c7'; // 99% Conf Coldspot
-          statLabel = 'Getis-Ord Gi* Coldspot (99% Conf)';
-        } else if (zScore <= -1.96) {
-          fillColor = '#0ea5e9'; // 95% Conf Coldspot
-          statLabel = 'Getis-Ord Gi* Coldspot (95% Conf)';
+        // Felt-Style Continuous Hexagonal Tessellation (Image 2 reference)
+        if (cell.readinessScore >= 90) {
+          fillColor = '#4338ca'; // Deep Indigo (Highest Readiness)
+          tagText = 'Tier-1 Prime Hex';
+          tagColor = '#818cf8';
+        } else if (cell.readinessScore >= 80) {
+          fillColor = '#7c3aed'; // Purple Orchid
+          tagText = 'Tier-2 High Hex';
+          tagColor = '#a78bfa';
+        } else if (cell.readinessScore >= 70) {
+          fillColor = '#e11d48'; // Rose / Crimson
+          tagText = 'Tier-3 Growth Hex';
+          tagColor = '#fb7185';
+        } else if (cell.readinessScore >= 60) {
+          fillColor = '#f59e0b'; // Warm Amber
+          tagText = 'Tier-4 Moderate Hex';
+          tagColor = '#fcd34d';
         } else {
-          fillColor = '#64748b'; // Not significant
-          statLabel = 'Getis-Ord Gi* Neutral Zone';
+          fillColor = '#fde047'; // Canvas Pale Yellow
+          tagText = 'Tier-5 Fringe Hex';
+          tagColor = '#fef08a';
         }
-        statValue = `z = ${zScore > 0 ? '+' : ''}${zScore}`;
+        statLabel = 'H3 Readiness Index';
+        statValue = `${cell.readinessScore}/100`;
+      } else if (spatialAlgorithm === 'gi_star') {
+        // Getis-Ord Gi* 7-Bin Cartography (Image 1 reference)
+        const bin = cell.giBin ?? (cell.zScore && cell.zScore >= 2.58 ? 3 : cell.zScore && cell.zScore >= 1.96 ? 2 : cell.zScore && cell.zScore >= 1.65 ? 1 : cell.zScore && cell.zScore <= -2.58 ? -3 : cell.zScore && cell.zScore <= -1.96 ? -2 : cell.zScore && cell.zScore <= -1.65 ? -1 : 0);
+        const z = cell.zScore ?? Number(((cell.readinessScore - 68.5) / 7.2).toFixed(2));
+        
+        if (bin === 3) {
+          fillColor = '#b91c1c'; // Dark Red (Hot Spot 99% Conf)
+          statLabel = 'Hot Spot (99% Conf)';
+          tagText = 'Critical Commercial Clustered Node';
+          tagColor = '#f87171';
+        } else if (bin === 2) {
+          fillColor = '#ea580c'; // Orange-Red (Hot Spot 95% Conf)
+          statLabel = 'Hot Spot (95% Conf)';
+          tagText = 'Significant High Cluster';
+          tagColor = '#fb923c';
+        } else if (bin === 1) {
+          fillColor = '#f59e0b'; // Warm Amber (Hot Spot 90% Conf)
+          statLabel = 'Hot Spot (90% Conf)';
+          tagText = 'Emerging Spatial Cluster';
+          tagColor = '#fbbf24';
+        } else if (bin === -1) {
+          fillColor = '#38bdf8'; // Cyan (Cold Spot 90% Conf)
+          statLabel = 'Cold Spot (90% Conf)';
+          tagText = 'Low Activity Zone';
+          tagColor = '#7dd3fc';
+        } else if (bin === -2) {
+          fillColor = '#0284c7'; // Sky Blue (Cold Spot 95% Conf)
+          statLabel = 'Cold Spot (95% Conf)';
+          tagText = 'Significant Low Cluster';
+          tagColor = '#38bdf8';
+        } else if (bin === -3) {
+          fillColor = '#1e3a8a'; // Deep Navy Blue (Cold Spot 99% Conf)
+          statLabel = 'Cold Spot (99% Conf)';
+          tagText = 'Spatial Void / Dead Zone';
+          tagColor = '#60a5fa';
+        } else {
+          fillColor = '#fef08a'; // Cream / Pale Yellow (Not Significant)
+          statLabel = 'Not Significant';
+          tagText = 'Random Distribution (p > 0.10)';
+          tagColor = '#cbd5e1';
+        }
+        statValue = `z = ${z > 0 ? '+' : ''}${z}`;
       } else if (spatialAlgorithm === 'dbscan') {
-        // DBSCAN Density Clustering
-        const clusterId = (idx % 4) + 1;
-        statLabel = `DBSCAN Cluster #${clusterId} (eps=1.2km)`;
-        statValue = `${Math.round(cell.population / 2500)} core points`;
-        if (clusterId === 1) fillColor = '#8b5cf6';
-        else if (clusterId === 2) fillColor = '#ec4899';
-        else if (clusterId === 3) fillColor = '#06b6d4';
-        else fillColor = '#10b981';
+        // DBSCAN Density Clustering & Agglomerations (Image 3 reference)
+        const cluster = cell.clusterId || 1;
+        const density = cell.dbscanDensity || Math.round(cell.population / 0.78);
+
+        if (cluster === 1) {
+          fillColor = '#dc2626'; // Red (>10,000 pts/sq km)
+          statLabel = 'DBSCAN: Core Commercial Hub';
+          tagText = 'Ultra-Dense Core (>10k pts/km²)';
+          tagColor = '#f87171';
+        } else if (cluster === 2) {
+          fillColor = '#ea580c'; // Dark Orange (5,001 - 10,000)
+          statLabel = 'DBSCAN: Tech & Commercial Corridor';
+          tagText = 'High Density (5k - 10k pts/km²)';
+          tagColor = '#fb923c';
+        } else if (cluster === 3) {
+          fillColor = '#f59e0b'; // Amber Orange (1,001 - 5,000)
+          statLabel = 'DBSCAN: Logistics Belt';
+          tagText = 'Moderate Density (1k - 5k pts/km²)';
+          tagColor = '#fbbf24';
+        } else if (cluster === 4) {
+          fillColor = '#eab308'; // Gold Yellow (101 - 1,000)
+          statLabel = 'DBSCAN: Suburban Growth Node';
+          tagText = 'Low Density (100 - 1k pts/km²)';
+          tagColor = '#fde047';
+        } else {
+          fillColor = '#64748b'; // Muted Gray (<100 / Noise)
+          statLabel = 'DBSCAN: Noise / Outlier';
+          tagText = 'Spatial Noise (<100 pts/km²)';
+          tagColor = '#94a3b8';
+        }
+        statValue = `${density.toLocaleString()} pts/km²`;
       }
 
       return {
@@ -743,11 +821,17 @@ export const MapView: React.FC<MapViewProps> = ({
           fillColor,
           statLabel,
           statValue,
+          tagText,
+          tagColor,
           algorithm: spatialAlgorithm,
+          zScore: cell.zScore,
+          pValue: cell.pValue,
+          dbscanDensity: cell.dbscanDensity,
+          dbscanClusterName: cell.dbscanClusterName,
         },
         geometry: {
           type: 'Polygon' as const,
-          coordinates: [createHexagonPolygon(cell.lat, cell.lng)],
+          coordinates: [createHexagonPolygon(cell.lat, cell.lng, 0.55)],
         },
       };
     });
@@ -771,7 +855,7 @@ export const MapView: React.FC<MapViewProps> = ({
         source: 'h3-cells-source',
         paint: {
           'fill-color': ['get', 'fillColor'],
-          'fill-opacity': h3Opacity,
+          'fill-opacity': baseH3Opacity,
         },
       });
 
@@ -782,7 +866,7 @@ export const MapView: React.FC<MapViewProps> = ({
         paint: {
           'line-color': '#ffffff',
           'line-width': 1,
-          'line-opacity': 0.25,
+          'line-opacity': 0.30,
         },
       });
 
@@ -800,14 +884,18 @@ export const MapView: React.FC<MapViewProps> = ({
         popupRef.current
           .setLngLat(e.lngLat)
           .setHTML(`
-            <div style="background:#090d1e; color:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid rgba(99,102,241,0.4); font-family:sans-serif; font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.6);">
-              <div style="font-weight:bold; color:#818cf8; margin-bottom:4px; display:flex; justify-content:space-between; gap:10px;">
-                <span>${props.statLabel || 'H3 Zone'}: <b>${props.h3Index}</b></span>
-                <span style="color:#34d399; font-weight:900;">${props.statValue || props.score}</span>
+            <div style="background:#090d1f; color:#f8fafc; padding:12px 14px; border-radius:14px; border:1px solid ${props.tagColor}88; font-family:sans-serif; font-size:11px; box-shadow:0 15px 35px rgba(0,0,0,0.85); min-width:220px;">
+              <div style="font-weight:900; color:#ffffff; font-size:12px; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <span>${props.statLabel}</span>
+                <span style="color:${props.tagColor}; font-family:monospace; font-weight:900; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:6px;">${props.statValue}</span>
               </div>
-              <div style="color:#94a3b8; font-size:10px; line-height:1.4;">
-                👥 Pop: <b>${props.population?.toLocaleString()}</b> | 🏢 Competitors: <b>${props.competitors}</b><br/>
-                ⚡ Accessibility: <b>${props.accessibility}%</b>
+              <div style="color:${props.tagColor}; font-size:10px; font-weight:700; margin-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
+                ${props.tagText} • <span style="color:#94a3b8; font-family:monospace;">${props.h3Index}</span>
+              </div>
+              <div style="color:#cbd5e1; font-size:10px; line-height:1.5;">
+                👥 Population: <b style="color:#ffffff;">${props.population?.toLocaleString()}</b><br/>
+                🏢 Competitors: <b style="color:#ffffff;">${props.competitors} sites</b><br/>
+                ⚡ Road Access: <b style="color:#ffffff;">${props.accessibility}%</b>
               </div>
             </div>
           `)
@@ -831,7 +919,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
     if (map.getLayer('h3-cells-fill')) {
       map.setPaintProperty('h3-cells-fill', 'fill-color', ['get', 'fillColor']);
-      map.setPaintProperty('h3-cells-fill', 'fill-opacity', h3Opacity);
+      map.setPaintProperty('h3-cells-fill', 'fill-opacity', baseH3Opacity);
       map.setLayoutProperty('h3-cells-fill', 'visibility', 'visible');
       map.setLayoutProperty('h3-cells-line', 'visibility', 'visible');
     }
@@ -1700,21 +1788,29 @@ export const MapView: React.FC<MapViewProps> = ({
         )}
 
         {/* Dynamic Spatial Algorithm Legend */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-medium text-slate-300 shadow-xl pointer-events-auto">
+        <div className="hidden md:flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-medium text-slate-300 shadow-xl pointer-events-auto max-w-2xl">
           {spatialAlgorithm === 'h3' && (
             <>
-              <span className="font-bold text-indigo-400">H3 Hex:</span>
+              <span className="font-bold text-indigo-400">H3 Hex Mesh:</span>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span>High (&ge;80)</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#4338ca]" />
+                <span>Prime (&ge;90)</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                <span>Mod (65-79)</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed]" />
+                <span>High (80-89)</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                <span>Low (&lt;65)</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#e11d48]" />
+                <span>Growth (70-79)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
+                <span>Mod (60-69)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#fde047]" />
+                <span>Fringe (&lt;60)</span>
               </div>
             </>
           )}
@@ -1723,19 +1819,31 @@ export const MapView: React.FC<MapViewProps> = ({
             <>
               <span className="font-bold text-amber-400">Gi* Hotspots:</span>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#b91c1c]" />
                 <span>99% Hot (z&ge;2.6)</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#ea580c]" />
                 <span>95% Hot</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
-                <span>Neutral</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
+                <span>90% Hot</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-600" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#fef08a]" />
+                <span className="text-slate-400">Neutral</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#38bdf8]" />
+                <span>90% Cold</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0284c7]" />
+                <span>95% Cold</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#1e3a8a]" />
                 <span>99% Cold (z&le;-2.6)</span>
               </div>
             </>
@@ -1743,22 +1851,26 @@ export const MapView: React.FC<MapViewProps> = ({
 
           {spatialAlgorithm === 'dbscan' && (
             <>
-              <span className="font-bold text-purple-400">DBSCAN (eps=1.2km):</span>
+              <span className="font-bold text-purple-400">DBSCAN Density:</span>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                <span>Cluster #1</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#dc2626]" />
+                <span>Core Hub (&gt;10k)</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-pink-500" />
-                <span>Cluster #2</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#ea580c]" />
+                <span>Tech Corridor (5k-10k)</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
-                <span>Cluster #3</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
+                <span>Logistics (1k-5k)</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span>Cluster #4</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#eab308]" />
+                <span>Suburban (100-1k)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#64748b]" />
+                <span>Noise (&lt;100)</span>
               </div>
             </>
           )}
