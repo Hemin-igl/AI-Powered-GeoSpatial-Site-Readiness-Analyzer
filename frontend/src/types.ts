@@ -105,7 +105,9 @@ export interface IsochroneLevel {
   reachablePopulation: number;
   areaSqKm: number;
   color: string;
-  pathOffsets: [number, number][]; // relative lat/lng offsets for polygon
+  strokeColor?: string;
+  label?: string;
+  pathOffsets?: [number, number][]; // relative lat/lng offsets for polygon
 }
 
 export interface MapLayerConfig {
@@ -161,8 +163,8 @@ export interface DemographicData {
   averageDensityPerSqKm: number;
   medianMonthlyIncomeINR: number;
   activeHouseholds: number;
-  ageDistribution: { range: string; percentage: number; label: string }[];
-  incomeBrackets: { tier: string; share: number; color: string }[];
+  ageDistribution: { range?: string; group?: string; percentage: number; label?: string }[];
+  incomeBrackets: { tier?: string; bracket?: string; share?: number; count?: number; color?: string }[];
 }
 
 export interface RoadData {

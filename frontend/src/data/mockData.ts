@@ -200,7 +200,7 @@ export const DEFAULT_CANDIDATE_SITES: CandidateSite[] = [
       competitorsWithin5km: 10,
       medianIncomeMonthly: 72000,
       zoningCode: 'C-1 Commercial High-Density',
-      floodRiskLevel: 'Moderate',
+      floodRiskLevel: 'Medium',
     },
     summary: 'Rapidly expanding residential and dining precinct with strong family demographics and steady weekend consumer spending.',
   },
@@ -230,7 +230,7 @@ export const DEFAULT_CANDIDATE_SITES: CandidateSite[] = [
       competitorsWithin5km: 6,
       medianIncomeMonthly: 48000,
       zoningCode: 'I-2 Light Industrial / Logistics',
-      floodRiskLevel: 'Moderate',
+      floodRiskLevel: 'Medium',
     },
     summary: 'Strategic freight and trade aggregation area with proximity to regional rail corridors and accessible heavy commercial vehicle lanes.',
   }

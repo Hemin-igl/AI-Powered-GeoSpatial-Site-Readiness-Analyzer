@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import maplibregl, { Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+type MapLibreMap = maplibregl.Map;
+type Marker = maplibregl.Marker;
+type Popup = maplibregl.Popup;
 import {
   ZoomIn,
   ZoomOut,
@@ -44,6 +47,7 @@ import {
   generateRiskZones,
   analyzeSite,
 } from '../services/gisService';
+import { ISOCHRONE_DATA } from '../data/mockData';
 
 const MAP_API_KEY = import.meta.env.VITE_MAP_API_KEY || 'cb1_3r5w_1_870f82872ede2321c67a7ba6';
 
@@ -322,6 +326,7 @@ export const MapView: React.FC<MapViewProps> = ({
   showIsochrones = true,
   isochroneMode = 'drive',
   spatialAlgorithm: propSpatialAlgorithm,
+  onSelectHexCell,
   onAddNewSite,
   onPickCoordinates,
   className = 'h-[540px]',
@@ -420,7 +425,7 @@ export const MapView: React.FC<MapViewProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    const map = new MapLibreMap({
+    const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: MAP_STYLES[currentStyle].style as any,
       center: defaultCenter,
@@ -480,7 +485,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
         const el = document.createElement('div');
         el.className = 'w-5 h-5 rounded-full bg-indigo-600 border-2 border-white ring-4 ring-indigo-500/40 animate-pulse';
-        tempMarkerRef.current = new Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
+        tempMarkerRef.current = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
 
         const analyzed = await analyzeSite({
           lat,
@@ -626,7 +631,7 @@ export const MapView: React.FC<MapViewProps> = ({
         if (!e.features || e.features.length === 0) return;
         map.getCanvas().style.cursor = 'pointer';
         const props = e.features[0].properties;
-        if (!popupRef.current) popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+        if (!popupRef.current) popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
         popupRef.current.setLngLat(e.lngLat).setHTML(`
           <div style="background:#090d1f; color:#f8fafc; padding:10px 12px; border-radius:12px; border:1px solid ${props.color}; font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.7); max-width:220px;">
             <div style="font-weight:bold; color:${props.color}; font-size:12px;">🏗️ ${props.name}</div>
@@ -687,7 +692,7 @@ export const MapView: React.FC<MapViewProps> = ({
         if (!e.features || e.features.length === 0) return;
         map.getCanvas().style.cursor = 'pointer';
         const props = e.features[0].properties;
-        if (!popupRef.current) popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+        if (!popupRef.current) popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
         popupRef.current.setLngLat(e.lngLat).setHTML(`
           <div style="background:#090d1f; color:#f8fafc; padding:10px 12px; border-radius:12px; border:1px solid #ef4444; font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.7); max-width:230px;">
             <div style="font-weight:bold; color:#f87171; font-size:12px;">⚠️ Hazard: ${props.name}</div>
@@ -890,7 +895,7 @@ export const MapView: React.FC<MapViewProps> = ({
         const props = feat.properties;
 
         if (!popupRef.current) {
-          popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+          popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
         }
 
         popupRef.current
@@ -975,7 +980,7 @@ export const MapView: React.FC<MapViewProps> = ({
         if (!e.features || e.features.length === 0) return;
         map.getCanvas().style.cursor = 'pointer';
         const props = e.features[0].properties;
-        if (!popupRef.current) popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+        if (!popupRef.current) popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
         popupRef.current.setLngLat(e.lngLat).setHTML(`
           <div style="background:#090d1f; color:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid #38bdf8; font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.7);">
             <div style="font-weight:bold; color:#38bdf8;">🛣️ ${props.name}</div>
@@ -1007,7 +1012,7 @@ export const MapView: React.FC<MapViewProps> = ({
             properties: { minutes: 30, color: '#818cf8', label: `30 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '820,000' : '110,000' },
             geometry: {
               type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 30, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[2]?.pathOffsets)],
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 30, activeIsoMode, (ISOCHRONE_DATA[activeIsoMode]?.[2] as any)?.pathOffsets)],
             },
           },
           {
@@ -1015,7 +1020,7 @@ export const MapView: React.FC<MapViewProps> = ({
             properties: { minutes: 20, color: '#38bdf8', label: `20 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '385,000' : '52,000' },
             geometry: {
               type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 20, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[1]?.pathOffsets)],
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 20, activeIsoMode, (ISOCHRONE_DATA[activeIsoMode]?.[1] as any)?.pathOffsets)],
             },
           },
           {
@@ -1023,7 +1028,7 @@ export const MapView: React.FC<MapViewProps> = ({
             properties: { minutes: 10, color: '#34d399', label: `10 min Catchment (${activeIsoMode.toUpperCase()})`, population: activeIsoMode === 'drive' ? '142,000' : '18,500' },
             geometry: {
               type: 'Polygon' as const,
-              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 10, activeIsoMode, ISOCHRONE_DATA[activeIsoMode]?.[0]?.pathOffsets)],
+              coordinates: [createIsochronePolygon(targetSite.lat, targetSite.lng, 10, activeIsoMode, (ISOCHRONE_DATA[activeIsoMode]?.[0] as any)?.pathOffsets)],
             },
           },
         ]
@@ -1224,7 +1229,7 @@ export const MapView: React.FC<MapViewProps> = ({
         onSelectSite(site);
       });
 
-      const marker = new Marker({ element: el })
+      const marker = new maplibregl.Marker({ element: el })
         .setLngLat([site.lng, site.lat])
         .addTo(map);
 
@@ -1281,7 +1286,7 @@ export const MapView: React.FC<MapViewProps> = ({
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!popupRef.current) {
-          popupRef.current = new Popup({ closeButton: true, closeOnClick: true });
+          popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: true });
         }
 
         const statusTag = comp.status || 'Open • Operational';
@@ -1327,7 +1332,7 @@ export const MapView: React.FC<MapViewProps> = ({
           .addTo(map);
       });
 
-      const marker = new Marker({ element: el })
+      const marker = new maplibregl.Marker({ element: el })
         .setLngLat([comp.lng, comp.lat])
         .addTo(map);
 

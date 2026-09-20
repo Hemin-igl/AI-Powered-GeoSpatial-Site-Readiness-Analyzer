@@ -22,18 +22,33 @@ interface ReportsPageProps {
   currentSite: CandidateSite;
   sites: CandidateSite[];
   onSelectSite: (site: CandidateSite) => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
 export const ReportsPage: React.FC<ReportsPageProps> = ({
   activeCity,
   currentSite,
-  sites,
+  sites = [],
   onSelectSite,
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [generatedSuccess, setGeneratedSuccess] = useState(false);
   const reportDocRef = useRef<HTMLDivElement>(null);
+
+  const effectiveSite = currentSite || sites[0] || {
+    id: 'site_default',
+    name: 'Default Candidate Site',
+    area: 'Central District',
+    lat: 21.1702,
+    lng: 72.8311,
+    businessType: 'Retail Store',
+    readinessScore: 85,
+    status: 'High Potential',
+    factors: { population: 85, accessibility: 90, competition: 80, landUse: 85, environmentalRisk: 90 },
+    metrics: { populationWithin5km: 1200000, populationDensity: 15000, nearestHighwayKm: 1.5, nearestMajorRoadMeters: 50, competitorsWithin1km: 2, competitorsWithin3km: 5, competitorsWithin5km: 12, medianIncomeMonthly: 65000, zoningCode: 'C-1', floodRiskLevel: 'Low' },
+    summary: 'Strong commercial readiness.',
+  };
 
   const handleGenerateReport = async () => {
     if (!reportDocRef.current) return;
@@ -42,15 +57,17 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
     setGeneratedSuccess(false);
 
     try {
-      setDownloadProgress(45);
+      setDownloadProgress(40);
+      const isDark = document.documentElement.classList.contains('dark');
       const canvas = await html2canvas(reportDocRef.current, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false,
-        backgroundColor: '#ffffff',
+        backgroundColor: isDark ? '#0f172a' : '#ffffff',
       });
 
-      setDownloadProgress(80);
+      setDownloadProgress(75);
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -58,30 +75,37 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         format: 'a4',
       });
 
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
       let heightLeft = imgHeight;
       let position = 0;
 
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= pageHeight;
+      heightLeft -= pdfHeight;
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
+      while (heightLeft > 5) {
+        position -= pdfHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
+        heightLeft -= pdfHeight;
       }
 
-      const fileName = `GeoReady_Executive_Dossier_${currentSite.name.replace(/\s+/g, '_')}_${activeCity.name.replace(/\s+/g, '_')}.pdf`;
+      setDownloadProgress(95);
+      const safeSiteName = (effectiveSite.name || 'Site').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safeCityName = (activeCity?.name || 'City').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `GeoReady_Executive_Dossier_${safeSiteName}_${safeCityName}.pdf`;
+
       pdf.save(fileName);
 
       setDownloadProgress(100);
       setGeneratedSuccess(true);
-      setTimeout(() => setGeneratedSuccess(false), 4500);
+      setTimeout(() => setGeneratedSuccess(false), 5000);
     } catch (err) {
       console.error('PDF Generation failed:', err);
+      window.print();
     } finally {
       setIsGenerating(false);
       setDownloadProgress(null);
@@ -89,35 +113,41 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   };
 
   const handleExportCSV = () => {
-    const headers = ['Site ID', 'Name', 'City', 'Area', 'Latitude', 'Longitude', 'Archetype', 'Readiness Score', 'Status', 'Population Factor', 'Accessibility Factor', 'Competition Factor', 'Land Use Factor', 'Risk Factor', '5km Population', 'Nearest Highway (km)', 'Zoning Code'];
-    const rows = sites.map(s => [
-      s.id,
-      `"${s.name}"`,
-      `"${activeCity.name}"`,
-      `"${s.area}"`,
-      s.lat,
-      s.lng,
-      `"${s.businessType}"`,
-      s.readinessScore,
-      `"${s.status}"`,
-      s.factors.population,
-      s.factors.accessibility,
-      s.factors.competition,
-      s.factors.landUse,
-      s.factors.environmentalRisk,
-      s.metrics.populationWithin5km,
-      s.metrics.nearestHighwayKm,
-      `"${s.metrics.zoningCode}"`,
-    ]);
+    try {
+      const headers = ['Site ID', 'Name', 'City', 'Area', 'Latitude', 'Longitude', 'Archetype', 'Readiness Score', 'Status', 'Population Factor', 'Accessibility Factor', 'Competition Factor', 'Land Use Factor', 'Risk Factor', '5km Population', 'Nearest Highway (km)', 'Zoning Code'];
+      const rows = sites.map(s => [
+        s.id,
+        `"${(s.name || '').replace(/"/g, '""')}"`,
+        `"${(activeCity?.name || '').replace(/"/g, '""')}"`,
+        `"${(s.area || '').replace(/"/g, '""')}"`,
+        s.lat,
+        s.lng,
+        `"${(s.businessType || '').replace(/"/g, '""')}"`,
+        s.readinessScore,
+        `"${(s.status || '').replace(/"/g, '""')}"`,
+        s.factors?.population ?? 0,
+        s.factors?.accessibility ?? 0,
+        s.factors?.competition ?? 0,
+        s.factors?.landUse ?? 0,
+        s.factors?.environmentalRisk ?? 0,
+        s.metrics?.populationWithin5km ?? 0,
+        s.metrics?.nearestHighwayKm ?? 0,
+        `"${(s.metrics?.zoningCode || '').replace(/"/g, '""')}"`,
+      ]);
 
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `GeoReady_Candidates_${activeCity.name.replace(/\s+/g, '_')}_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `GeoReady_Candidates_${(activeCity?.name || 'City').replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('CSV Export failed:', err);
+    }
   };
 
   const handlePrint = () => {
@@ -125,34 +155,40 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   };
 
   const handleExportGeoJSON = () => {
-    const geojson = {
-      type: 'FeatureCollection',
-      features: sites.map((s) => ({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [s.lng, s.lat],
-        },
-        properties: {
-          id: s.id,
-          name: s.name,
-          readinessScore: s.readinessScore,
-          businessType: s.businessType,
-          populationScore: s.factors.population,
-          accessibilityScore: s.factors.accessibility,
-        },
-      })),
-    };
+    try {
+      const geojson = {
+        type: 'FeatureCollection',
+        features: sites.map((s) => ({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [s.lng, s.lat],
+          },
+          properties: {
+            id: s.id,
+            name: s.name,
+            readinessScore: s.readinessScore,
+            businessType: s.businessType,
+            populationScore: s.factors?.population,
+            accessibilityScore: s.factors?.accessibility,
+          },
+        })),
+      };
 
-    const blob = new Blob([JSON.stringify(geojson, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `GeoReady_${activeCity.name.replace(/\s+/g, '_')}_Sites_${Date.now()}.geojson`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const blob = new Blob([JSON.stringify(geojson, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `GeoReady_${(activeCity?.name || 'City').replace(/[^a-zA-Z0-9_-]/g, '_')}_Sites_${Date.now()}.geojson`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('GeoJSON Export failed:', err);
+    }
   };
 
   return (
@@ -228,7 +264,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>
-              Executive Dossier for <strong>{currentSite.name}</strong> successfully generated and downloaded as PDF!
+              Executive Dossier for <strong>{effectiveSite.name}</strong> successfully generated and downloaded as PDF!
             </span>
           </div>
           <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-300">PDF-{activeCity.name.toUpperCase().substring(0,5)}-2026-X8</span>
@@ -250,7 +286,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                   key={s.id}
                   onClick={() => onSelectSite(s)}
                   className={`p-3 rounded-2xl border transition-all cursor-pointer ${
-                    s.id === currentSite.id
+                    s.id === effectiveSite.id
                       ? 'bg-indigo-50/70 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-200 font-bold'
                       : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                   }`}
@@ -317,7 +353,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                 Site Feasibility & Readiness Assessment
               </h2>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {activeCity.name} Metropolitan Development Authority Area • Ref: {activeCity.name.substring(0,3).toUpperCase()}-{currentSite.id.toUpperCase()}
+                {activeCity.name} Metropolitan Development Authority Area • Ref: {activeCity.name.substring(0,3).toUpperCase()}-{effectiveSite.id.toUpperCase()}
               </span>
             </div>
 
@@ -340,21 +376,21 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
             <div>
               <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Site Name</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">{currentSite.name}</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">{effectiveSite.name}</span>
             </div>
             <div>
               <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Coordinates</span>
               <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                {currentSite.lat.toFixed(4)}°N, {currentSite.lng.toFixed(4)}°E
+                {effectiveSite.lat.toFixed(4)}°N, {effectiveSite.lng.toFixed(4)}°E
               </span>
             </div>
             <div>
               <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Archetype</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">{currentSite.businessType}</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">{effectiveSite.businessType}</span>
             </div>
             <div>
               <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Municipal Ward</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">{currentSite.area} Ward</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">{effectiveSite.area} Ward</span>
             </div>
           </div>
 
@@ -366,19 +402,19 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               </span>
               <div className="flex items-baseline gap-1 mt-0.5">
                 <span className="text-4xl font-black text-indigo-700 dark:text-indigo-400">
-                  {currentSite.readinessScore}
+                  {effectiveSite.readinessScore}
                 </span>
                 <span className="text-sm font-semibold text-slate-400 dark:text-slate-500">/ 100</span>
               </div>
               <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                Status: {currentSite.status} (Exceeds deployment hurdle threshold)
+                Status: {effectiveSite.status} (Exceeds deployment hurdle threshold)
               </span>
             </div>
 
             <div className="text-right text-xs space-y-1">
-              <span className="text-slate-500 dark:text-slate-400 block">5 km Population: <strong className="text-slate-800 dark:text-slate-200">{currentSite.metrics.populationWithin5km.toLocaleString()}</strong></span>
-              <span className="text-slate-500 dark:text-slate-400 block">Nearest Highway: <strong className="text-slate-800 dark:text-slate-200">{currentSite.metrics.nearestHighwayKm} km</strong></span>
-              <span className="text-slate-500 dark:text-slate-400 block">Zoning Code: <strong className="text-slate-800 dark:text-slate-200">{currentSite.metrics.zoningCode}</strong></span>
+              <span className="text-slate-500 dark:text-slate-400 block">5 km Population: <strong className="text-slate-800 dark:text-slate-200">{effectiveSite.metrics.populationWithin5km.toLocaleString()}</strong></span>
+              <span className="text-slate-500 dark:text-slate-400 block">Nearest Highway: <strong className="text-slate-800 dark:text-slate-200">{effectiveSite.metrics.nearestHighwayKm} km</strong></span>
+              <span className="text-slate-500 dark:text-slate-400 block">Zoning Code: <strong className="text-slate-800 dark:text-slate-200">{effectiveSite.metrics.zoningCode}</strong></span>
             </div>
           </div>
 
@@ -390,23 +426,23 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             <div className="grid grid-cols-5 gap-2 text-center text-xs">
               <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Population</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{currentSite.factors.population}/100</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{effectiveSite.factors.population}/100</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Accessibility</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{currentSite.factors.accessibility}/100</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{effectiveSite.factors.accessibility}/100</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Competition</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{currentSite.factors.competition}/100</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{effectiveSite.factors.competition}/100</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Land Use</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{currentSite.factors.landUse}/100</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{effectiveSite.factors.landUse}/100</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Env Risk</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{currentSite.factors.environmentalRisk}/100</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{effectiveSite.factors.environmentalRisk}/100</span>
               </div>
             </div>
           </div>
@@ -417,7 +453,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               Strategic Executive Recommendations
             </h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800">
-              {currentSite.summary} Priority recommendation: Proceed with commercial lease negotiation, ensure ingress easement along the primary frontage, and configure rooftop solar to leverage local irradiance profiles.
+              {effectiveSite.summary} Priority recommendation: Proceed with commercial lease negotiation, ensure ingress easement along the primary frontage, and configure rooftop solar to leverage local irradiance profiles.
             </p>
           </div>
 

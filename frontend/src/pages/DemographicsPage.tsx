@@ -130,12 +130,12 @@ export const DemographicsPage: React.FC<DemographicsPageProps> = ({
           </div>
 
           <div className="space-y-3.5 py-2">
-            {demographics.ageDistribution.map((item) => (
-              <div key={item.range} className="space-y-1">
+            {demographics.ageDistribution.map((item, idx) => (
+              <div key={item.range || item.group || idx} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-slate-800 dark:text-slate-200 font-mono w-14">
-                      {item.range}
+                      {item.range || item.group}
                     </span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">{item.label}</span>
                   </div>
@@ -174,20 +174,20 @@ export const DemographicsPage: React.FC<DemographicsPageProps> = ({
           </div>
 
           <div className="space-y-3.5 py-2">
-            {demographics.incomeBrackets.map((item) => (
-              <div key={item.tier} className="space-y-1">
+            {demographics.incomeBrackets.map((item, idx) => (
+              <div key={item.tier || item.bracket || idx} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{item.tier}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{item.tier || item.bracket}</span>
                   <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">
-                    {item.share}%
+                    {item.share ?? item.count}%
                   </span>
                 </div>
                 <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${item.share * 2.6}%`,
-                      backgroundColor: item.color,
+                      width: `${(item.share ?? item.count ?? 0) * 2.6}%`,
+                      backgroundColor: item.color || '#6366f1',
                     }}
                   />
                 </div>

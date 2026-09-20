@@ -1,0 +1,26 @@
+src/App.tsx(300,17): error TS2322: Type '{ activeCity: City; sites: CandidateSite[]; comparisonSiteIds: string[]; onToggleCompare: (site: CandidateSite) => void; onSelectSite: (site: CandidateSite) => void; onNavigateTab: Dispatch<...>; }' is not assignable to type 'IntrinsicAttributes & CompareSitesPageProps'.
+  Property 'onToggleCompare' does not exist on type 'IntrinsicAttributes & CompareSitesPageProps'.
+src/App.tsx(307,16): error TS2741: Property 'activeCity' is missing in type '{ layers: MapLayerConfig[]; onToggleLayer: (layerId: string) => void; onChangeOpacity: (layerId: string, opacity: number) => void; onAddLayer: (newLayer: MapLayerConfig) => void; }' but required in type 'DataLayersPageProps'.
+src/App.tsx(321,17): error TS2322: Type '{ activeCity: City; currentSite: CandidateSite; sites: CandidateSite[]; onSelectSite: (site: CandidateSite) => void; onNavigateTab: Dispatch<...>; }' is not assignable to type 'IntrinsicAttributes & ReportsPageProps'.
+  Property 'onNavigateTab' does not exist on type 'IntrinsicAttributes & ReportsPageProps'.
+src/components/MapView.tsx(2,8): error TS1192: Module '"D:/Projects/AI-Powered-GeoSpatial-Site-Readiness-Analyzer-main/frontend/node_modules/maplibre-gl/dist/maplibre-gl"' has no default export.
+src/components/MapView.tsx(928,15): error TS2304: Cannot find name 'onSelectHexCell'.
+src/components/MapView.tsx(928,32): error TS2304: Cannot find name 'onSelectHexCell'.
+src/components/MapView.tsx(1011,139): error TS2339: Property 'pathOffsets' does not exist on type '{ minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; } | { minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; }'.
+  Property 'pathOffsets' does not exist on type '{ minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; }'.
+src/components/MapView.tsx(1019,139): error TS2339: Property 'pathOffsets' does not exist on type '{ minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; } | { minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; }'.
+  Property 'pathOffsets' does not exist on type '{ minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; }'.
+src/components/MapView.tsx(1027,139): error TS2339: Property 'pathOffsets' does not exist on type '{ minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; } | { minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; }'.
+  Property 'pathOffsets' does not exist on type '{ minutes: number; reachablePopulation: number; areaSqKm: number; color: string; strokeColor: string; label: string; }'.
+src/components/MapView.tsx(1158,5): error TS2304: Cannot find name 'onSelectHexCell'.
+src/data/mockData.ts(203,7): error TS2322: Type '"Moderate"' is not assignable to type '"High" | "Low" | "Medium"'.
+src/data/mockData.ts(233,7): error TS2322: Type '"Moderate"' is not assignable to type '"High" | "Low" | "Medium"'.
+src/data/mockData.ts(327,11): error TS2353: Object literal may only specify known properties, and 'group' does not exist in type '{ range: string; percentage: number; label: string; }'.
+src/data/mockData.ts(328,11): error TS2353: Object literal may only specify known properties, and 'group' does not exist in type '{ range: string; percentage: number; label: string; }'.
+src/data/mockData.ts(329,11): error TS2353: Object literal may only specify known properties, and 'group' does not exist in type '{ range: string; percentage: number; label: string; }'.
+src/data/mockData.ts(330,11): error TS2353: Object literal may only specify known properties, and 'group' does not exist in type '{ range: string; percentage: number; label: string; }'.
+src/data/mockData.ts(331,11): error TS2353: Object literal may only specify known properties, and 'group' does not exist in type '{ range: string; percentage: number; label: string; }'.
+src/data/mockData.ts(334,11): error TS2353: Object literal may only specify known properties, and 'bracket' does not exist in type '{ tier: string; share: number; color: string; }'.
+src/data/mockData.ts(335,11): error TS2353: Object literal may only specify known properties, and 'bracket' does not exist in type '{ tier: string; share: number; color: string; }'.
+src/data/mockData.ts(336,11): error TS2353: Object literal may only specify known properties, and 'bracket' does not exist in type '{ tier: string; share: number; color: string; }'.
+src/data/mockData.ts(337,11): error TS2353: Object literal may only specify known properties, and 'bracket' does not exist in type '{ tier: string; share: number; color: string; }'.

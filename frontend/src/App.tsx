@@ -297,7 +297,7 @@ export default function App() {
                 activeCity={activeCity}
                 sites={sites}
                 comparisonSiteIds={comparisonSiteIds}
-                onToggleCompare={handleToggleSiteComparison}
+                onToggleSiteComparison={handleToggleSiteComparison}
                 onSelectSite={handleSelectSite}
                 onNavigateTab={setActiveTab}
               />
@@ -305,6 +305,7 @@ export default function App() {
 
             {activeTab === 'data-layers' && (
               <DataLayersPage
+                activeCity={activeCity}
                 layers={layers}
                 onToggleLayer={handleToggleLayer}
                 onChangeOpacity={handleChangeOpacity}
