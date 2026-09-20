@@ -143,79 +143,70 @@ export function generateH3GridAround(centerLat: number, centerLng: number): H3Ce
 }
 
 /**
- * Generates high-density 3D building polygon footprints with realistic heights and architectural types
+ * Generates 3D building polygon footprints with height data around target coordinates
  */
-export function generate3DBuildingsAround(centerLat: number, centerLng: number) {
-  const buildings: {
-    id: string;
-    height: number;
-    base: number;
-    color: string;
-    type: string;
-    coordinates: [number, number][];
-  }[] = [];
+export function generate3DBuildingsAround(centerLat: number, centerLng: number): GeoJSON.FeatureCollection {
+  const features: GeoJSON.Feature[] = [];
 
-  const buildingArchetypes = [
-    { name: 'Sky-Tower Corporate Plaza', minH: 90, maxH: 175, colors: ['#a855f7', '#8b5cf6', '#7c3aed'] },
-    { name: 'Metropolitan Tech Center', minH: 60, maxH: 120, colors: ['#38bdf8', '#0ea5e9', '#0284c7'] },
-    { name: 'Commercial Megamall & Hub', minH: 32, maxH: 55, colors: ['#10b981', '#059669', '#34d399'] },
-    { name: 'Financial District Tower', minH: 100, maxH: 185, colors: ['#c084fc', '#e879f9', '#d946ef'] },
-    { name: 'High-Rise Luxury Residences', minH: 70, maxH: 135, colors: ['#6366f1', '#4f46e5', '#818cf8'] },
-    { name: 'Civic Center & Co-Working', minH: 28, maxH: 65, colors: ['#06b6d4', '#0891b2', '#22d3ee'] },
-    { name: 'Logistics & Supply Depot', minH: 18, maxH: 35, colors: ['#f59e0b', '#d97706', '#fbbf24'] },
-    { name: 'Innovation Research Lab', minH: 45, maxH: 85, colors: ['#ec4899', '#db2777', '#f472b6'] },
+  const buildingTypes = [
+    { name: 'Commercial Tower', baseHeight: 85, color: '#6366f1', type: 'commercial' },
+    { name: 'Retail Shopping Mall', baseHeight: 35, color: '#10b981', type: 'retail' },
+    { name: 'Office Complex', baseHeight: 55, color: '#38bdf8', type: 'office' },
+    { name: 'Logistics Hub', baseHeight: 22, color: '#f59e0b', type: 'industrial' },
+    { name: 'Residential Tower', baseHeight: 65, color: '#a855f7', type: 'residential' },
+    { name: 'Tech Park Block', baseHeight: 45, color: '#ec4899', type: 'office' },
   ];
 
-  const gridSize = 10;
-  const spacingKm = 0.16;
+  const gridSize = 6;
+  const spacingKm = 0.28;
 
   for (let x = -gridSize; x <= gridSize; x++) {
     for (let y = -gridSize; y <= gridSize; y++) {
-      // Leave slight central clearing for site marker visibility
-      const distFromCenter = Math.sqrt(x * x + y * y);
-      if (distFromCenter < 0.6) continue;
-      // Urban street grid cutouts
-      if ((x % 3 === 0 && y % 2 === 0) || Math.random() < 0.15) continue;
+      if (Math.abs(x) === 0 && Math.abs(y) === 0) continue; // Leave central road clear
+      if (Math.random() < 0.35) continue; // Organic street gaps
 
-      const typeIndex = Math.abs(x * 7 + y * 11) % buildingArchetypes.length;
-      const archetype = buildingArchetypes[typeIndex];
-      const color = archetype.colors[Math.abs(x * 3 + y * 5) % archetype.colors.length];
+      const bType = buildingTypes[Math.abs(x * 3 + y * 5) % buildingTypes.length];
+      const heightVariance = 0.7 + Math.random() * 0.8;
+      const height = Math.round(bType.baseHeight * heightVariance);
 
-      // Central business district height decay
-      const decayFactor = Math.max(0.35, 1.25 - (distFromCenter / gridSize) * 0.75);
-      const randomJitter = 0.85 + Math.random() * 0.3;
-      const height = Math.round(
-        (archetype.minH + Math.random() * (archetype.maxH - archetype.minH)) * decayFactor * randomJitter
-      );
+      const bCenterLat = centerLat + (y * spacingKm + (Math.random() - 0.5) * 0.05) / 111.32;
+      const bCenterLng = centerLng + (x * spacingKm + (Math.random() - 0.5) * 0.05) / (111.32 * Math.cos((centerLat * Math.PI) / 180));
 
-      const bCenterLat = centerLat + (y * spacingKm + (Math.random() - 0.5) * 0.025) / 111.32;
-      const bCenterLng =
-        centerLng + (x * spacingKm + (Math.random() - 0.5) * 0.025) / (111.32 * Math.cos((centerLat * Math.PI) / 180));
-
-      // Realistic building footprint size
-      const width = 0.00045 + Math.random() * 0.00045;
-      const length = 0.00045 + Math.random() * 0.00045;
+      const w = 0.00075 + Math.random() * 0.0006;
+      const h = 0.00075 + Math.random() * 0.0006;
 
       const coords: [number, number][] = [
-        [bCenterLng - width, bCenterLat - length],
-        [bCenterLng + width, bCenterLat - length],
-        [bCenterLng + width, bCenterLat + length],
-        [bCenterLng - width, bCenterLat + length],
-        [bCenterLng - width, bCenterLat - length],
+        [bCenterLng - w, bCenterLat - h],
+        [bCenterLng + w, bCenterLat - h],
+        [bCenterLng + w, bCenterLat + h],
+        [bCenterLng - w, bCenterLat + h],
+        [bCenterLng - w, bCenterLat - h],
       ];
 
-      buildings.push({
+      features.push({
+        type: 'Feature',
         id: `bld_${x}_${y}`,
-        height,
-        base: 0,
-        color,
-        type: archetype.name,
-        coordinates: coords,
+        properties: {
+          name: `${bType.name} #${Math.abs(x * 7 + y * 11) % 90 + 10}`,
+          type: bType.type,
+          render_height: height,
+          render_min_height: 0,
+          height,
+          min_height: 0,
+          color: bType.color,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [coords],
+        },
       });
     }
   }
 
-  return buildings;
+  return {
+    type: 'FeatureCollection',
+    features,
+  };
 }
 
 const workspaceData = CITY_DATA.workspace || { candidateSites: [], competitors: [], h3Cells: [] };
@@ -526,3 +517,5 @@ The primary limitation is competitor concentration within the 5 km catchment are
 
 The site has approximately 64,200 people reachable within 20 minutes and immediate access to arterial transit lines.`;
 }
+
+

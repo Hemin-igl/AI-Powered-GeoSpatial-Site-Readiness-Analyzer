@@ -41,19 +41,75 @@ import {
   generateRealWorldCompetitors,
   generateH3GridAround,
   analyzeSite,
+  generate3DBuildingsAround,
 } from '../services/gisService';
 
-// Vector Map Styles using OpenFreeMap & Satellite Hybrid
+// Vector & High-Speed CDN Map Styles
 const MAP_STYLES = {
+  voyager: {
+    name: 'CartoDB Voyager (3D)',
+    icon: Sun,
+    styleUrl: {
+      version: 8,
+      sources: {
+        'voyager-tiles': {
+          type: 'raster',
+          tiles: [
+            'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+            'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+            'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+            'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+          ],
+          tileSize: 256,
+          maxzoom: 20,
+          attribution: '&copy; OpenStreetMap, &copy; CARTO',
+        },
+      },
+      layers: [
+        {
+          id: 'voyager-base',
+          type: 'raster',
+          source: 'voyager-tiles',
+          minzoom: 0,
+          maxzoom: 22,
+        },
+      ],
+    },
+  },
+  dark: {
+    name: 'Dark Matter (3D)',
+    icon: Moon,
+    styleUrl: {
+      version: 8,
+      sources: {
+        'dark-matter-tiles': {
+          type: 'raster',
+          tiles: [
+            'https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png',
+            'https://b.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png',
+            'https://c.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png',
+            'https://d.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png',
+          ],
+          tileSize: 256,
+          maxzoom: 20,
+          attribution: '&copy; OpenStreetMap, &copy; CARTO',
+        },
+      },
+      layers: [
+        {
+          id: 'dark-matter-base',
+          type: 'raster',
+          source: 'dark-matter-tiles',
+          minzoom: 0,
+          maxzoom: 22,
+        },
+      ],
+    },
+  },
   bright: {
     name: 'OpenFreeMap Bright',
     icon: Sun,
     styleUrl: 'https://tiles.openfreemap.org/styles/bright',
-  },
-  dark: {
-    name: 'OpenFreeMap Dark',
-    icon: Moon,
-    styleUrl: 'https://tiles.openfreemap.org/styles/dark',
   },
   liberty: {
     name: 'OSM Navigation',
@@ -208,7 +264,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const tempMarkerRef = useRef<Marker | null>(null);
   const popupRef = useRef<Popup | null>(null);
 
-  const [currentStyle, setCurrentStyle] = useState<StyleKey>('bright');
+  const [currentStyle, setCurrentStyle] = useState<StyleKey>('voyager');
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [activeLayerId, setActiveLayerId] = useState<string>('pop_density');
@@ -437,55 +493,121 @@ export const MapView: React.FC<MapViewProps> = ({
       }
     }
 
+    // Vector source if available
     const vectorSourceId = map.getSource('openmaptiles') ? 'openmaptiles' : 'openfreemap';
     if (!map.getSource('openmaptiles') && !map.getSource('openfreemap')) {
-      map.addSource('openfreemap', {
-        url: 'https://tiles.openfreemap.org/planet',
-        type: 'vector',
-      });
+      try {
+        map.addSource('openfreemap', {
+          url: 'https://tiles.openfreemap.org/planet',
+          type: 'vector',
+        });
+      } catch (err) {
+        console.warn('Vector source initialization notice:', err);
+      }
     }
 
-    if (!map.getLayer('3d-buildings')) {
+    if (!map.getLayer('3d-buildings') && (map.getSource('openmaptiles') || map.getSource('openfreemap'))) {
+      try {
+        map.addLayer(
+          {
+            id: '3d-buildings',
+            source: vectorSourceId,
+            'source-layer': 'building',
+            type: 'fill-extrusion',
+            minzoom: 14,
+            filter: ['!=', ['get', 'hide_3d'], true],
+            paint: {
+              'fill-extrusion-color': [
+                'interpolate',
+                ['linear'],
+                ['get', 'render_height'],
+                0, 'lightgray',
+                200, 'royalblue',
+                400, 'lightblue'
+              ],
+              'fill-extrusion-height': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                14, 0,
+                16, ['get', 'render_height']
+              ],
+              'fill-extrusion-base': [
+                'case',
+                ['>=', ['get', 'zoom'], 15],
+                ['get', 'render_min_height'],
+                0
+              ],
+              'fill-extrusion-opacity': 0.9,
+            },
+          },
+          labelLayerId
+        );
+      } catch (err) {
+        console.warn('Vector 3D buildings layer notice:', err);
+      }
+    }
+
+    // --- A2. HIGH-PRECISION 3D URBAN BUILDINGS LAYER (ALWAYS VISIBLE & GUARANTEED 3D) ---
+    const local3DBuildings = generate3DBuildingsAround(defaultCenter[1], defaultCenter[0]);
+    if (map.getSource('3d-buildings-local-source')) {
+      (map.getSource('3d-buildings-local-source') as any).setData(local3DBuildings);
+    } else {
+      map.addSource('3d-buildings-local-source', {
+        type: 'geojson',
+        data: local3DBuildings,
+      });
+
       map.addLayer(
         {
-          id: '3d-buildings',
-          source: vectorSourceId,
-          'source-layer': 'building',
+          id: '3d-buildings-local',
+          source: '3d-buildings-local-source',
           type: 'fill-extrusion',
-          minzoom: 14,
-          filter: ['!=', ['get', 'hide_3d'], true],
+          minzoom: 12,
           paint: {
             'fill-extrusion-color': [
               'interpolate',
               ['linear'],
               ['get', 'render_height'],
-              0,
-              'lightgray',
-              200,
-              'royalblue',
-              400,
-              'lightblue'
+              25, '#60a5fa',
+              60, '#6366f1',
+              95, '#8b5cf6',
+              130, '#ec4899',
+              160, '#f43f5e',
             ],
-            'fill-extrusion-height': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              14,
-              0,
-              16,
-              ['get', 'render_height']
-            ],
-            'fill-extrusion-base': [
-              'case',
-              ['>=', ['get', 'zoom'], 15],
-              ['get', 'render_min_height'],
-              0
-            ],
-            'fill-extrusion-opacity': 0.9,
+            'fill-extrusion-height': ['get', 'render_height'],
+            'fill-extrusion-base': ['get', 'render_min_height'],
+            'fill-extrusion-opacity': 0.92,
           },
         },
         labelLayerId
       );
+
+      map.on('mouseenter', '3d-buildings-local', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const props = e.features[0].properties;
+        if (!popupRef.current) {
+          popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+        }
+        popupRef.current
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div style="background:#090d1e; color:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid rgba(99,102,241,0.5); font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.6);">
+              <div style="font-weight:bold; color:#818cf8; margin-bottom:2px;">🏢 ${props.name}</div>
+              <div style="color:#94a3b8; font-size:10px; line-height:1.4;">
+                Type: <b style="color:#e2e8f0; text-transform:capitalize;">${props.type}</b><br/>
+                Height: <b style="color:#38bdf8;">${props.render_height}m</b> (Extruded 3D)
+              </div>
+            </div>
+          `)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', '3d-buildings-local', () => {
+        map.getCanvas().style.cursor = '';
+        if (popupRef.current) popupRef.current.remove();
+      });
     }
 
     // --- B. ISOCHRONES LAYER ---
