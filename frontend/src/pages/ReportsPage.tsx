@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   FileText,
   Download,
@@ -11,7 +11,10 @@ import {
   Building,
   Loader2,
   ExternalLink,
+  Table,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { CandidateSite, City } from '../types';
 
 interface ReportsPageProps {
@@ -30,25 +33,95 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [generatedSuccess, setGeneratedSuccess] = useState(false);
+  const reportDocRef = useRef<HTMLDivElement>(null);
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
+    if (!reportDocRef.current) return;
     setIsGenerating(true);
-    setDownloadProgress(10);
+    setDownloadProgress(20);
     setGeneratedSuccess(false);
 
-    const interval = setInterval(() => {
-      setDownloadProgress((prev) => {
-        if (prev === null) return 10;
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsGenerating(false);
-          setGeneratedSuccess(true);
-          setTimeout(() => setGeneratedSuccess(false), 3500);
-          return null;
-        }
-        return prev + 25;
+    try {
+      setDownloadProgress(45);
+      const canvas = await html2canvas(reportDocRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
       });
-    }, 250);
+
+      setDownloadProgress(80);
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `GeoReady_Executive_Dossier_${currentSite.name.replace(/\s+/g, '_')}_${activeCity.name.replace(/\s+/g, '_')}.pdf`;
+      pdf.save(fileName);
+
+      setDownloadProgress(100);
+      setGeneratedSuccess(true);
+      setTimeout(() => setGeneratedSuccess(false), 4500);
+    } catch (err) {
+      console.error('PDF Generation failed:', err);
+    } finally {
+      setIsGenerating(false);
+      setDownloadProgress(null);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Site ID', 'Name', 'City', 'Area', 'Latitude', 'Longitude', 'Archetype', 'Readiness Score', 'Status', 'Population Factor', 'Accessibility Factor', 'Competition Factor', 'Land Use Factor', 'Risk Factor', '5km Population', 'Nearest Highway (km)', 'Zoning Code'];
+    const rows = sites.map(s => [
+      s.id,
+      `"${s.name}"`,
+      `"${activeCity.name}"`,
+      `"${s.area}"`,
+      s.lat,
+      s.lng,
+      `"${s.businessType}"`,
+      s.readinessScore,
+      `"${s.status}"`,
+      s.factors.population,
+      s.factors.accessibility,
+      s.factors.competition,
+      s.factors.landUse,
+      s.factors.environmentalRisk,
+      s.metrics.populationWithin5km,
+      s.metrics.nearestHighwayKm,
+      `"${s.metrics.zoningCode}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GeoReady_Candidates_${activeCity.name.replace(/\s+/g, '_')}_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleExportGeoJSON = () => {
@@ -100,29 +173,49 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+            title="Print or Save to PDF via Browser"
+          >
+            <Printer className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            <span className="hidden sm:inline">Print</span>
+          </button>
+
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+            title="Export Candidate Summary CSV"
+          >
+            <Table className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            <span>CSV</span>
+          </button>
+
           <button
             onClick={handleExportGeoJSON}
-            className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+            title="Export WGS84 GeoJSON FeatureCollection"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export GeoJSON</span>
+            <Download className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            <span>GeoJSON</span>
           </button>
 
           <button
             onClick={handleGenerateReport}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-70"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all cursor-pointer disabled:opacity-70"
+            title="Render and Download High-Res Executive PDF Dossier"
           >
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Compiling Dossier ({downloadProgress}%)...</span>
+                <span>Generating PDF ({downloadProgress}%)...</span>
               </>
             ) : (
               <>
                 <FileText className="w-4 h-4" />
-                <span>Generate Executive Report</span>
+                <span>Download Executive PDF</span>
               </>
             )}
           </button>
@@ -135,7 +228,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>
-              Executive Dossier for <strong>{currentSite.name}</strong> successfully generated and simulated as PDF download!
+              Executive Dossier for <strong>{currentSite.name}</strong> successfully generated and downloaded as PDF!
             </span>
           </div>
           <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-300">PDF-{activeCity.name.toUpperCase().substring(0,5)}-2026-X8</span>
@@ -179,15 +272,24 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               Available Export Formats
             </h4>
             <div className="space-y-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between text-slate-700 dark:text-slate-300">
+              <div
+                onClick={handleGenerateReport}
+                className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between text-slate-700 dark:text-slate-300 cursor-pointer transition-colors"
+              >
                 <span>Executive Dossier (PDF)</span>
-                <span className="font-mono text-slate-400 dark:text-slate-500">A4 • Color</span>
+                <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">A4 • 300 DPI</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between text-slate-700 dark:text-slate-300">
+              <div
+                onClick={handleExportGeoJSON}
+                className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between text-slate-700 dark:text-slate-300 cursor-pointer transition-colors"
+              >
                 <span>Spatial Features (GeoJSON)</span>
                 <span className="font-mono text-slate-400 dark:text-slate-500">WGS84</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between text-slate-700 dark:text-slate-300">
+              <div
+                onClick={handleExportCSV}
+                className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between text-slate-700 dark:text-slate-300 cursor-pointer transition-colors"
+              >
                 <span>Census Catchment (CSV)</span>
                 <span className="font-mono text-slate-400 dark:text-slate-500">Tabular</span>
               </div>
@@ -196,7 +298,10 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         </div>
 
         {/* Right 8 Cols: Realistic Printable Document Preview */}
-        <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg space-y-6 text-slate-800 dark:text-slate-200">
+        <div
+          ref={reportDocRef}
+          className="lg:col-span-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg space-y-6 text-slate-800 dark:text-slate-200"
+        >
           {/* Document Header */}
           <div className="flex items-start justify-between pb-6 border-b border-slate-200 dark:border-slate-800">
             <div>
