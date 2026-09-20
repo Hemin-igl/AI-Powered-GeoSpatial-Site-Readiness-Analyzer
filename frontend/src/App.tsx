@@ -8,8 +8,10 @@ import { Navbar } from './components/Navbar';
 import { SiteDrawer } from './components/SiteDrawer';
 import { NewSiteModal } from './components/NewSiteModal';
 import { AiAssistantModal } from './components/AiAssistantModal';
+import { AuthModal } from './components/AuthModal';
 
 // Pages
+import { IntroPage } from './pages/IntroPage';
 import { HomePage } from './pages/HomePage';
 import { OverviewPage } from './pages/OverviewPage';
 import { SiteAnalysisPage } from './pages/SiteAnalysisPage';
@@ -25,27 +27,59 @@ import { RiskAnalysisPage } from './pages/RiskAnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { analyzeSite } from './services/gisService';
 
+const CLEAN_INITIAL_SITE: CandidateSite = {
+  id: 'new-site-init',
+  name: 'Candidate Location',
+  area: 'Custom Target Location',
+  lat: 21.1702,
+  lng: 72.8311,
+  businessType: 'Retail Store',
+  readinessScore: 0,
+  status: 'Needs Review',
+  factors: { population: 0, accessibility: 0, competition: 0, landUse: 0, environmentalRisk: 0 },
+  metrics: {
+    populationWithin5km: 0,
+    populationDensity: 0,
+    nearestHighwayKm: 0,
+    nearestMajorRoadMeters: 0,
+    competitorsWithin1km: 0,
+    competitorsWithin3km: 0,
+    competitorsWithin5km: 0,
+    medianIncomeMonthly: 0,
+    zoningCode: 'Pending Evaluation',
+    floodRiskLevel: 'Low',
+  },
+  summary: 'Enter coordinates and click Run Analysis to evaluate this location using the GIS backend engine.',
+};
+
 export default function App() {
+  const [showIntroPage, setShowIntroPage] = useState<boolean>(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+
   const [activeTab, setActiveTab] = useState<string>('home');
   const [activeCity, setActiveCity] = useState<City>(CITIES[0]);
-  const activeCityData = CITY_DATA[activeCity.id];
+  const activeCityData = CITY_DATA[activeCity.id] || {
+    city: activeCity,
+    candidateSites: [],
+    competitors: [],
+    h3Cells: [],
+    demographics: { totalMetropolitanPopulation: 0, averageDensityPerSqKm: 0, medianMonthlyIncomeINR: 0, activeHouseholds: 0, ageDistribution: [], incomeBrackets: [] },
+    opportunityZones: [],
+    riverCoordinates: [],
+    roads: [],
+  };
 
-  const [sites, setSites] = useState<CandidateSite[]>(activeCityData.candidateSites);
-  const [selectedSite, setSelectedSite] = useState<CandidateSite>(activeCityData.candidateSites[0]);
+  const [sites, setSites] = useState<CandidateSite[]>([]);
+  const [selectedSite, setSelectedSite] = useState<CandidateSite>(CLEAN_INITIAL_SITE);
   const [layers, setLayers] = useState<MapLayerConfig[]>(DEFAULT_MAP_LAYERS);
-  const [comparisonSiteIds, setComparisonSiteIds] = useState<string[]>([
-    activeCityData.candidateSites[0].id,
-    activeCityData.candidateSites[1]?.id || '',
-  ]);
+  const [comparisonSiteIds, setComparisonSiteIds] = useState<string[]>([]);
 
   // Handle city switch gracefully
   const handleCityChange = (cityId: string) => {
     const newCity = CITIES.find(c => c.id === cityId);
     if (!newCity) return;
     setActiveCity(newCity);
-    const newData = CITY_DATA[newCity.id];
-    setSites(newData.candidateSites);
-    setSelectedSite(newData.candidateSites[0]);
     setActiveTab('overview');
   };
 
@@ -121,6 +155,28 @@ export default function App() {
     setActiveTab('site-analysis');
   };
 
+  // 1. INTRO PAGE VIEW (Black Background on Website Load)
+  if (showIntroPage) {
+    return (
+      <>
+        <IntroPage
+          onEnterPlatform={() => setShowIntroPage(false)}
+          onOpenAuthModal={(mode) => {
+            setAuthModalMode(mode || 'login');
+            setIsAuthModalOpen(true);
+          }}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          initialMode={authModalMode}
+          onSuccess={() => setShowIntroPage(false)}
+        />
+      </>
+    );
+  }
+
+  // 2. MAIN APPLICATION WORKSPACE
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased transition-colors">
       {/* 1. PERSISTENT SIDEBAR NAVIGATION */}
@@ -141,6 +197,11 @@ export default function App() {
           candidateSites={sites}
           onSelectSite={handleSelectSite}
           onNavigateTab={setActiveTab}
+          onOpenAuthModal={() => {
+            setAuthModalMode('login');
+            setIsAuthModalOpen(true);
+          }}
+          onOpenIntroPage={() => setShowIntroPage(true)}
           onSearchSelect={(siteId) => {
             const found = sites.find((s) => s.id === siteId);
             if (found) {
@@ -250,7 +311,7 @@ export default function App() {
                 activeCity={activeCity}
                 sites={sites}
                 comparisonSiteIds={comparisonSiteIds}
-                onToggleSiteComparison={handleToggleSiteComparison}
+                onToggleCompare={handleToggleSiteComparison}
                 onSelectSite={handleSelectSite}
                 onNavigateTab={setActiveTab}
               />
@@ -258,7 +319,6 @@ export default function App() {
 
             {activeTab === 'data-layers' && (
               <DataLayersPage
-                activeCity={activeCity}
                 layers={layers}
                 onToggleLayer={handleToggleLayer}
                 onChangeOpacity={handleChangeOpacity}
@@ -272,6 +332,7 @@ export default function App() {
                 currentSite={selectedSite}
                 sites={sites}
                 onSelectSite={handleSelectSite}
+                onNavigateTab={setActiveTab}
               />
             )}
 
@@ -284,12 +345,14 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'settings' && <SettingsPage activeCity={activeCity} />}
+            {activeTab === 'settings' && (
+              <SettingsPage activeCity={activeCity} />
+            )}
           </div>
         </main>
       </div>
 
-      {/* 3. SITE DETAIL DRAWER (Slides in from right when site clicked) */}
+      {/* 3. SITE DETAIL DRAWER */}
       {isSiteDrawerOpen && (
         <SiteDrawer
           activeCity={activeCity}
@@ -322,7 +385,7 @@ export default function App() {
         onNavigateTab={setActiveTab}
       />
 
-      {/* 6. FLOATING AI ASSISTANT TRIGGER BUTTON (Bottom-Right) */}
+      {/* 6. FLOATING AI ASSISTANT TRIGGER BUTTON */}
       {!isAiModalOpen && (
         <button
           onClick={() => setIsAiModalOpen(true)}
@@ -339,6 +402,13 @@ export default function App() {
           </span>
         </button>
       )}
+
+      {/* 7. AUTH MODAL */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authModalMode}
+      />
     </div>
   );
 }
