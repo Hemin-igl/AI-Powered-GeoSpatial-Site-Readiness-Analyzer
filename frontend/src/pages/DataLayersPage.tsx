@@ -16,7 +16,7 @@ import {
 import { City, MapLayerConfig } from '../types';
 
 interface DataLayersPageProps {
-  activeCity: City;
+  activeCity?: City;
   layers: MapLayerConfig[];
   onToggleLayer: (layerId: string) => void;
   onChangeOpacity: (layerId: string, opacity: number) => void;
@@ -30,8 +30,9 @@ export const DataLayersPage: React.FC<DataLayersPageProps> = ({
   onChangeOpacity,
   onAddLayer,
 }) => {
+  const cityName = activeCity?.name || 'Metropolitan';
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [datasetName, setDatasetName] = useState(`${activeCity.name} Phase 2 Corridors`);
+  const [datasetName, setDatasetName] = useState(`${cityName} Phase 2 Corridors`);
   const [fileFormat, setFileFormat] = useState('GeoJSON');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);

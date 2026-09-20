@@ -26,7 +26,8 @@ interface CompareSitesPageProps {
   activeCity: City;
   sites: CandidateSite[];
   comparisonSiteIds: string[];
-  onToggleSiteComparison: (site: CandidateSite) => void;
+  onToggleSiteComparison?: (site: CandidateSite) => void;
+  onToggleCompare?: (site: CandidateSite) => void;
   onSelectSite: (site: CandidateSite) => void;
   onNavigateTab: (tab: string) => void;
 }
@@ -36,9 +37,11 @@ export const CompareSitesPage: React.FC<CompareSitesPageProps> = ({
   sites,
   comparisonSiteIds,
   onToggleSiteComparison,
+  onToggleCompare,
   onSelectSite,
   onNavigateTab,
 }) => {
+  const toggleFn = onToggleSiteComparison || onToggleCompare || (() => {});
   // Candidate sites currently selected for comparison (default first 2 if none selected)
   const compareSites =
     comparisonSiteIds.length >= 2

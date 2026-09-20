@@ -36,6 +36,7 @@ import {
   ARCHETYPES,
 } from '../types';
 import { LayerControl } from './LayerControl';
+import { ISOCHRONE_DATA } from '../data/mockData';
 import {
   generateRealWorldCompetitors,
   generateH3GridAround,
