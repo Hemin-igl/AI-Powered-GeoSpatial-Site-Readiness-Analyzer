@@ -14,6 +14,8 @@ from .api.routes import (
     auth,
 )
 
+from .db.session import init_db
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -22,6 +24,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 # Enable CORS for frontend integration
 app.add_middleware(

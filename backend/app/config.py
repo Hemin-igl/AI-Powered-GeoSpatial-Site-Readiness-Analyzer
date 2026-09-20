@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["*"]
     
+    # Database Configuration (PostgreSQL + PostGIS or SQLite fallback)
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./geoready.db")
+    POSTGIS_ENABLED: bool = os.getenv("POSTGIS_ENABLED", "false").lower() in ("true", "1")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "geoready_super_secret_jwt_key_2026")
+    
     # AI / LLM Integration (NVIDIA NIM or generic OpenAI-compatible API)
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
     NVIDIA_API_URL: str = os.getenv(
@@ -18,7 +23,7 @@ class Settings(BaseSettings):
     )
     NVIDIA_MODEL: str = os.getenv(
         "NVIDIA_MODEL", 
-        "meta/llama-3.1-70b-instruct"
+        "meta/llama-3.2-11b-vision-instruct"
     )
 
     # Scoring Algorithm Config

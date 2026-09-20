@@ -198,8 +198,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </div>
 
         <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-inner group">
-          {/* Map Canvas - designed to scale into full system later */}
+          {/* Real-World MapLibre Canvas with Full Interactive Controls */}
           <MapView
+            activeCity={activeCity}
             sites={sites}
             selectedSite={activeSite}
             onSelectSite={onSelectSite}
@@ -209,11 +210,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             onToggleLayer={onToggleLayer}
             onChangeOpacity={onChangeOpacity}
             showIsochrones={true}
-            className="h-[600px] w-full bg-slate-50 dark:bg-slate-950"
+            className="h-[600px] w-full"
           />
-          <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 pointer-events-none z-10 hidden group-hover:block transition-all">
-            <span className="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">Map System Placeholder Reserved</span>
-          </div>
         </div>
       </div>
 
