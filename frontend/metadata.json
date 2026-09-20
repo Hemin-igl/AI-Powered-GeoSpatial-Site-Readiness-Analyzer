@@ -1,0 +1,6 @@
+{
+  "name": "GeoReady",
+  "description": "AI-powered GeoSpatial site readiness analyzer and location intelligence platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
