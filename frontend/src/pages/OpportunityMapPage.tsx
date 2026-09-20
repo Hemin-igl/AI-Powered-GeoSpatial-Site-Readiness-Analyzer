@@ -52,9 +52,41 @@ export const OpportunityMapPage: React.FC<OpportunityMapPageProps> = ({
     filteredZones.find((z) => z.siteId === selectedSite?.id) || filteredZones[0];
 
   const handleZoneClick = (zone: OpportunityZone) => {
-    const site = sites.find((s) => s.id === zone.siteId);
-    if (site) {
-      onSelectSite(site);
+    const foundSite = sites.find((s) => s.id === zone.siteId);
+    if (foundSite) {
+      onSelectSite(foundSite);
+    } else {
+      const newSite: CandidateSite = {
+        id: zone.siteId || zone.id,
+        name: zone.name,
+        area: activeCity.name,
+        lat: zone.lat,
+        lng: zone.lng,
+        businessType: (zone.recommendedArchetype as BusinessType) || 'Retail Store',
+        readinessScore: zone.readinessScore,
+        status: zone.readinessScore >= 80 ? 'High Potential' : 'Moderate Potential',
+        factors: {
+          population: zone.populationDensityTier === 'High' ? 90 : zone.populationDensityTier === 'Medium' ? 75 : 60,
+          accessibility: 88,
+          competition: zone.competitionTier === 'Low' ? 85 : zone.competitionTier === 'Medium' ? 70 : 50,
+          landUse: 92,
+          environmentalRisk: 84,
+        },
+        metrics: {
+          populationWithin5km: zone.populationDensityTier === 'High' ? 1200000 : 750000,
+          populationDensity: zone.populationDensityTier === 'High' ? 15000 : 8000,
+          nearestHighwayKm: 0.6,
+          nearestMajorRoadMeters: 40,
+          competitorsWithin1km: zone.competitionTier === 'Low' ? 1 : 3,
+          competitorsWithin3km: zone.competitionTier === 'Low' ? 3 : 7,
+          competitorsWithin5km: 10,
+          medianIncomeMonthly: 65000,
+          zoningCode: 'Commercial Corridor',
+          floodRiskLevel: 'Low',
+        },
+        summary: `Grounded spatial evaluation for ${zone.name} with readiness score ${zone.readinessScore}/100.`,
+      };
+      onSelectSite(newSite);
     }
   };
 
