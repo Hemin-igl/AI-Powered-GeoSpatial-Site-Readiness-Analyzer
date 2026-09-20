@@ -43,27 +43,40 @@ const MAP_API_KEY = import.meta.env.VITE_MAP_API_KEY || 'cb1_3r5w_1_870f82872ede
 // MapLibre Basemap Style Presets
 const MAP_STYLES = {
   dark: {
-    name: 'Dark Matter',
+    name: 'Dark Matter GIS',
     icon: Moon,
     style: {
       version: 8,
       sources: {
-        'carto-dark': {
+        'esri-dark-base': {
           type: 'raster',
           tiles: [
-            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-            'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-            'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
-          attribution: '&copy; OpenStreetMap, &copy; CARTO',
+          attribution: '&copy; Esri, DeLorme, NAVTEQ',
+        },
+        'esri-dark-ref': {
+          type: 'raster',
+          tiles: [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+          ],
+          tileSize: 256,
+          attribution: '&copy; Esri',
         },
       },
       layers: [
         {
-          id: 'carto-dark-layer',
+          id: 'esri-dark-base-layer',
           type: 'raster',
-          source: 'carto-dark',
+          source: 'esri-dark-base',
+          minzoom: 0,
+          maxzoom: 20,
+        },
+        {
+          id: 'esri-dark-ref-layer',
+          type: 'raster',
+          source: 'esri-dark-ref',
           minzoom: 0,
           maxzoom: 20,
         },
@@ -84,12 +97,27 @@ const MAP_STYLES = {
           tileSize: 256,
           attribution: '&copy; Esri, Maxar, Earthstar Geographics',
         },
+        'satellite-labels': {
+          type: 'raster',
+          tiles: [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+          ],
+          tileSize: 256,
+          attribution: '&copy; Esri',
+        },
       },
       layers: [
         {
           id: 'satellite-layer',
           type: 'raster',
           source: 'satellite',
+          minzoom: 0,
+          maxzoom: 20,
+        },
+        {
+          id: 'satellite-labels-layer',
+          type: 'raster',
+          source: 'satellite-labels',
           minzoom: 0,
           maxzoom: 20,
         },
@@ -126,22 +154,35 @@ const MAP_STYLES = {
     style: {
       version: 8,
       sources: {
-        'carto-light': {
+        'esri-light-base': {
           type: 'raster',
           tiles: [
-            'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-            'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-            'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
-          attribution: '&copy; OpenStreetMap, &copy; CARTO',
+          attribution: '&copy; Esri, DeLorme, NAVTEQ',
+        },
+        'esri-light-ref': {
+          type: 'raster',
+          tiles: [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+          ],
+          tileSize: 256,
+          attribution: '&copy; Esri',
         },
       },
       layers: [
         {
-          id: 'carto-light-layer',
+          id: 'esri-light-base-layer',
           type: 'raster',
-          source: 'carto-light',
+          source: 'esri-light-base',
+          minzoom: 0,
+          maxzoom: 20,
+        },
+        {
+          id: 'esri-light-ref-layer',
+          type: 'raster',
+          source: 'esri-light-ref',
           minzoom: 0,
           maxzoom: 20,
         },
