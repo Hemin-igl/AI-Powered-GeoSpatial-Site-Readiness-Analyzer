@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     )
     NVIDIA_MODEL: str = os.getenv(
         "NVIDIA_MODEL", 
-        "meta/llama-3.1-70b-instruct"
+        "meta/llama-3.2-11b-vision-instruct"
     )
 
     # Scoring Algorithm Config

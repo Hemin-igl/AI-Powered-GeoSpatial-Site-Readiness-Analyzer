@@ -27,37 +27,44 @@ class AIService:
 
         # Check if NVIDIA API key is configured
         if settings.NVIDIA_API_KEY and settings.NVIDIA_API_KEY != "your_nvidia_api_key_here":
-            try:
-                headers = {
-                    "Authorization": f"Bearer {settings.NVIDIA_API_KEY}",
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "model": settings.NVIDIA_MODEL,
-                    "messages": [
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {
-                            "role": "user",
-                            "content": f"User question: {question}\n\nStructured Site Analysis Data:\n{json.dumps(analysis_data, indent=2)}"
-                        }
-                    ],
-                    "temperature": 0.2,
-                    "max_tokens": 800
-                }
-                async with httpx.AsyncClient(timeout=15.0) as client:
-                    resp = await client.post(settings.NVIDIA_API_URL, headers=headers, json=payload)
-                    if resp.status_code == 200:
-                        result = resp.json()
-                        content = result["choices"][0]["message"]["content"]
-                        return AIExplainResponse(
-                            explanation=content,
-                            grounded_facts=analysis_data,
-                            model=settings.NVIDIA_MODEL,
-                            status="success"
-                        )
-            except Exception:
-                # Fall back gracefully to deterministic explanation
-                pass
+            candidate_models = [
+                settings.NVIDIA_MODEL,
+                "meta/llama-3.2-11b-vision-instruct",
+                "meta/llama-3.2-90b-vision-instruct",
+                "nvidia/llama3-chatqa-1.5-70b",
+                "google/gemma-3-12b-it",
+            ]
+            for model_name in candidate_models:
+                try:
+                    headers = {
+                        "Authorization": f"Bearer {settings.NVIDIA_API_KEY}",
+                        "Content-Type": "application/json"
+                    }
+                    payload = {
+                        "model": model_name,
+                        "messages": [
+                            {"role": "system", "content": SYSTEM_PROMPT},
+                            {
+                                "role": "user",
+                                "content": f"User question: {question}\n\nStructured Site Analysis Data:\n{json.dumps(analysis_data, indent=2)}"
+                            }
+                        ],
+                        "temperature": 0.2,
+                        "max_tokens": 800
+                    }
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        resp = await client.post(settings.NVIDIA_API_URL, headers=headers, json=payload)
+                        if resp.status_code == 200:
+                            result = resp.json()
+                            content = result["choices"][0]["message"]["content"]
+                            return AIExplainResponse(
+                                explanation=content,
+                                grounded_facts=analysis_data,
+                                model=model_name,
+                                status="success"
+                            )
+                except Exception:
+                    continue
 
         # Deterministic Grounded Explanation Engine
         score = analysis_data.get("score", 75)

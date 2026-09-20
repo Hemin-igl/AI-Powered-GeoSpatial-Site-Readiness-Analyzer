@@ -830,9 +830,10 @@ export const MapView: React.FC<MapViewProps> = ({
     }
 
     if (map.getLayer('h3-cells-fill')) {
+      map.setPaintProperty('h3-cells-fill', 'fill-color', ['get', 'fillColor']);
       map.setPaintProperty('h3-cells-fill', 'fill-opacity', h3Opacity);
-      map.setLayoutProperty('h3-cells-fill', 'visibility', h3Active ? 'visible' : 'none');
-      map.setLayoutProperty('h3-cells-line', 'visibility', h3Active ? 'visible' : 'none');
+      map.setLayoutProperty('h3-cells-fill', 'visibility', 'visible');
+      map.setLayoutProperty('h3-cells-line', 'visibility', 'visible');
     }
 
     // --- C. REAL-WORLD COMPETITOR POINTS LAYER ---
@@ -924,7 +925,18 @@ export const MapView: React.FC<MapViewProps> = ({
       map.setLayoutProperty('competitors-point', 'visibility', 'none');
       map.setLayoutProperty('competitors-halo', 'visibility', 'none');
     }
-  }, [selectedSite, sites, showIsochrones, isochroneMode, layers, activeH3Cells, activeCompetitors, onSelectHexCell]);
+  }, [
+    selectedSite,
+    sites,
+    showIsochrones,
+    activeIsoMode,
+    spatialAlgorithm,
+    showRadialBuffers,
+    layers,
+    activeH3Cells,
+    activeCompetitors,
+    onSelectHexCell,
+  ]);
 
   // 6. Update GeoJSON layers on state changes
   useEffect(() => {
@@ -1686,6 +1698,71 @@ export const MapView: React.FC<MapViewProps> = ({
             </div>
           </div>
         )}
+
+        {/* Dynamic Spatial Algorithm Legend */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-medium text-slate-300 shadow-xl pointer-events-auto">
+          {spatialAlgorithm === 'h3' && (
+            <>
+              <span className="font-bold text-indigo-400">H3 Hex:</span>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span>High (&ge;80)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <span>Mod (65-79)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                <span>Low (&lt;65)</span>
+              </div>
+            </>
+          )}
+
+          {spatialAlgorithm === 'gi_star' && (
+            <>
+              <span className="font-bold text-amber-400">Gi* Hotspots:</span>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                <span>99% Hot (z&ge;2.6)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                <span>95% Hot</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
+                <span>Neutral</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-600" />
+                <span>99% Cold (z&le;-2.6)</span>
+              </div>
+            </>
+          )}
+
+          {spatialAlgorithm === 'dbscan' && (
+            <>
+              <span className="font-bold text-purple-400">DBSCAN (eps=1.2km):</span>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                <span>Cluster #1</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-pink-500" />
+                <span>Cluster #2</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
+                <span>Cluster #3</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span>Cluster #4</span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
