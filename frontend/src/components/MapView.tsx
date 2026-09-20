@@ -25,6 +25,7 @@ import {
   Users,
   Building2,
   Activity,
+  Box,
 } from 'lucide-react';
 import {
   CandidateSite,
@@ -36,11 +37,16 @@ import {
 } from '../types';
 import { LayerControl } from './LayerControl';
 import { ISOCHRONE_DATA } from '../data/mockData';
-import { generateRealWorldCompetitors, generateH3GridAround, analyzeSite } from '../services/gisService';
+import {
+  generateRealWorldCompetitors,
+  generateH3GridAround,
+  generate3DBuildingsAround,
+  analyzeSite,
+} from '../services/gisService';
 
 const MAP_API_KEY = import.meta.env.VITE_MAP_API_KEY || 'cb1_3r5w_1_870f82872ede2321c67a7ba6';
 
-// MapLibre Basemap Style Presets
+// MapLibre Basemap Style Presets (capped at maxzoom 18 to enable smooth overscaling without data unavailable warnings)
 const MAP_STYLES = {
   dark: {
     name: 'Dark Matter GIS',
@@ -54,6 +60,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
+          maxzoom: 18,
           attribution: '&copy; Esri, DeLorme, NAVTEQ',
         },
         'esri-dark-ref': {
@@ -62,6 +69,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
+          maxzoom: 18,
           attribution: '&copy; Esri',
         },
       },
@@ -71,14 +79,14 @@ const MAP_STYLES = {
           type: 'raster',
           source: 'esri-dark-base',
           minzoom: 0,
-          maxzoom: 20,
+          maxzoom: 22,
         },
         {
           id: 'esri-dark-ref-layer',
           type: 'raster',
           source: 'esri-dark-ref',
           minzoom: 0,
-          maxzoom: 20,
+          maxzoom: 22,
         },
       ],
     },
@@ -95,6 +103,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
+          maxzoom: 18,
           attribution: '&copy; Esri, Maxar, Earthstar Geographics',
         },
         'satellite-labels': {
@@ -103,6 +112,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
+          maxzoom: 18,
           attribution: '&copy; Esri',
         },
       },
@@ -112,14 +122,14 @@ const MAP_STYLES = {
           type: 'raster',
           source: 'satellite',
           minzoom: 0,
-          maxzoom: 20,
+          maxzoom: 22,
         },
         {
           id: 'satellite-labels-layer',
           type: 'raster',
           source: 'satellite-labels',
           minzoom: 0,
-          maxzoom: 20,
+          maxzoom: 22,
         },
       ],
     },
@@ -134,6 +144,7 @@ const MAP_STYLES = {
           type: 'raster',
           tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
           tileSize: 256,
+          maxzoom: 18,
           attribution: '&copy; OpenStreetMap contributors',
         },
       },
@@ -143,7 +154,7 @@ const MAP_STYLES = {
           type: 'raster',
           source: 'osm-streets',
           minzoom: 0,
-          maxzoom: 19,
+          maxzoom: 22,
         },
       ],
     },
@@ -160,6 +171,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
+          maxzoom: 18,
           attribution: '&copy; Esri, DeLorme, NAVTEQ',
         },
         'esri-light-ref': {
@@ -168,6 +180,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
+          maxzoom: 18,
           attribution: '&copy; Esri',
         },
       },
@@ -177,14 +190,14 @@ const MAP_STYLES = {
           type: 'raster',
           source: 'esri-light-base',
           minzoom: 0,
-          maxzoom: 20,
+          maxzoom: 22,
         },
         {
           id: 'esri-light-ref-layer',
           type: 'raster',
           source: 'esri-light-ref',
           minzoom: 0,
-          maxzoom: 20,
+          maxzoom: 22,
         },
       ],
     },
@@ -339,6 +352,21 @@ export const MapView: React.FC<MapViewProps> = ({
     return generateH3GridAround(center.lat, center.lng);
   }, [h3Cells, selectedSite, sites, defaultCenter]);
 
+  // 3D Isometric View Mode State
+  const [is3DMode, setIs3DMode] = useState(false);
+
+  const toggle3DMode = () => {
+    const next = !is3DMode;
+    setIs3DMode(next);
+    if (mapRef.current) {
+      mapRef.current.easeTo({
+        pitch: next ? 58 : 0,
+        bearing: next ? -24 : 0,
+        duration: 1000,
+      });
+    }
+  };
+
   // 1. Initialize MapLibre Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -347,7 +375,9 @@ export const MapView: React.FC<MapViewProps> = ({
       container: mapContainerRef.current,
       style: MAP_STYLES[currentStyle].style as any,
       center: defaultCenter,
-      zoom: 12.2,
+      zoom: 12.5,
+      maxZoom: 18.5,
+      maxPitch: 65,
       attributionControl: false,
     });
 
@@ -771,7 +801,85 @@ export const MapView: React.FC<MapViewProps> = ({
       map.setLayoutProperty('competitors-point', 'visibility', compActive ? 'visible' : 'none');
       map.setLayoutProperty('competitors-halo', 'visibility', compActive ? 'visible' : 'none');
     }
-  }, [selectedSite, sites, showIsochrones, isochroneMode, layers, activeH3Cells, activeCompetitors, onSelectHexCell]);
+
+    // --- D. 3D EXTRUDED BUILDINGS & CADASTRE LAYER ---
+    const buildingsActive = layers.find((l) => l.id === '3d_buildings' || l.id === 'land_use')?.active ?? true;
+    const buildingsOpacity = layers.find((l) => l.id === '3d_buildings')?.opacity ?? 0.85;
+    const centerPoint = selectedSite || (sites.length > 0 ? sites[0] : { lat: defaultCenter[1], lng: defaultCenter[0] });
+    const buildingsData = generate3DBuildingsAround(centerPoint.lat, centerPoint.lng);
+
+    const buildingsGeoJson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: buildingsData.map((b) => ({
+        type: 'Feature' as const,
+        properties: {
+          id: b.id,
+          height: b.height,
+          base: b.base,
+          color: b.color,
+          type: b.type,
+        },
+        geometry: {
+          type: 'Polygon' as const,
+          coordinates: [b.coordinates],
+        },
+      })),
+    };
+
+    if (map.getSource('3d-buildings-source')) {
+      (map.getSource('3d-buildings-source') as any).setData(buildingsGeoJson);
+    } else {
+      map.addSource('3d-buildings-source', {
+        type: 'geojson',
+        data: buildingsGeoJson,
+      });
+
+      map.addLayer({
+        id: '3d-buildings-extrusion',
+        type: 'fill-extrusion',
+        source: '3d-buildings-source',
+        paint: {
+          'fill-extrusion-color': ['get', 'color'],
+          'fill-extrusion-height': ['get', 'height'],
+          'fill-extrusion-base': ['get', 'base'],
+          'fill-extrusion-opacity': buildingsOpacity,
+        },
+      });
+
+      map.on('mouseenter', '3d-buildings-extrusion', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const props = e.features[0].properties;
+
+        if (!popupRef.current) {
+          popupRef.current = new Popup({ closeButton: false, closeOnClick: false });
+        }
+
+        popupRef.current
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div style="background:#090d1e; color:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid rgba(168,85,247,0.5); font-size:11px; box-shadow:0 10px 25px rgba(0,0,0,0.6);">
+              <div style="font-weight:bold; color:#c084fc; margin-bottom:2px;">🏢 ${props.type}</div>
+              <div style="color:#94a3b8; font-size:10px; line-height:1.4;">
+                Height: <b>${props.height}m</b> • Base: <b>${props.base}m</b><br/>
+                Zoning: <b>Commercial / Mixed Use</b>
+              </div>
+            </div>
+          `)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', '3d-buildings-extrusion', () => {
+        map.getCanvas().style.cursor = '';
+        if (popupRef.current) popupRef.current.remove();
+      });
+    }
+
+    if (map.getLayer('3d-buildings-extrusion')) {
+      map.setPaintProperty('3d-buildings-extrusion', 'fill-extrusion-opacity', buildingsOpacity);
+      map.setLayoutProperty('3d-buildings-extrusion', 'visibility', buildingsActive ? 'visible' : 'none');
+    }
+  }, [selectedSite, sites, showIsochrones, isochroneMode, layers, activeH3Cells, activeCompetitors, onSelectHexCell, defaultCenter]);
 
   // 6. Update GeoJSON layers on state changes
   useEffect(() => {
@@ -990,6 +1098,20 @@ export const MapView: React.FC<MapViewProps> = ({
             </div>
           )}
         </div>
+
+        {/* 3D Tilt View Mode Toggle */}
+        <button
+          onClick={toggle3DMode}
+          className={`p-2.5 rounded-2xl backdrop-blur-xl border shadow-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+            is3DMode
+              ? 'bg-purple-600 text-white border-purple-400 ring-2 ring-purple-500/40 shadow-purple-600/30'
+              : 'bg-black/80 hover:bg-black/90 text-slate-200 hover:text-white border-white/10'
+          }`}
+          title={is3DMode ? 'Switch to 2D Top-Down View' : 'Switch to 3D Isometric View'}
+        >
+          <Box className={`w-4 h-4 ${is3DMode ? 'text-white animate-bounce' : 'text-purple-400'}`} />
+          <span className="hidden sm:inline">{is3DMode ? '3D Active' : '3D View'}</span>
+        </button>
 
         {/* Layer Control Button */}
         <button

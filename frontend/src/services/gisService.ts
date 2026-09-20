@@ -142,6 +142,68 @@ export function generateH3GridAround(centerLat: number, centerLng: number): H3Ce
   return cells;
 }
 
+/**
+ * Generates 3D building polygon footprints with height data around target coordinates
+ */
+export function generate3DBuildingsAround(centerLat: number, centerLng: number) {
+  const buildings: {
+    id: string;
+    height: number;
+    base: number;
+    color: string;
+    type: string;
+    coordinates: [number, number][];
+  }[] = [];
+
+  const buildingTypes = [
+    { name: 'Commercial Tower', baseHeight: 85, color: '#6366f1' },
+    { name: 'Retail Shopping Mall', baseHeight: 35, color: '#10b981' },
+    { name: 'Office Complex', baseHeight: 55, color: '#38bdf8' },
+    { name: 'Logistics Hub', baseHeight: 22, color: '#f59e0b' },
+    { name: 'Residential Tower', baseHeight: 65, color: '#a855f7' },
+    { name: 'Tech Park Block', baseHeight: 45, color: '#ec4899' },
+  ];
+
+  const gridSize = 6;
+  const spacingKm = 0.28;
+
+  for (let x = -gridSize; x <= gridSize; x++) {
+    for (let y = -gridSize; y <= gridSize; y++) {
+      if (Math.abs(x) === 0 && Math.abs(y) === 0) continue; // Leave central road clear
+      if (Math.random() < 0.35) continue; // Organic street gaps
+
+      const bType = buildingTypes[Math.abs(x * 3 + y * 5) % buildingTypes.length];
+      const heightVariance = 0.7 + Math.random() * 0.8;
+      const height = Math.round(bType.baseHeight * heightVariance);
+
+      const bCenterLat = centerLat + (y * spacingKm + (Math.random() - 0.5) * 0.05) / 111.32;
+      const bCenterLng = centerLng + (x * spacingKm + (Math.random() - 0.5) * 0.05) / (111.32 * Math.cos((centerLat * Math.PI) / 180));
+
+      const w = 0.00075 + Math.random() * 0.0006;
+      const h = 0.00075 + Math.random() * 0.0006;
+
+      const coords: [number, number][] = [
+        [bCenterLng - w, bCenterLat - h],
+        [bCenterLng + w, bCenterLat - h],
+        [bCenterLng + w, bCenterLat + h],
+        [bCenterLng - w, bCenterLat + h],
+        [bCenterLng - w, bCenterLat - h],
+      ];
+
+      buildings.push({
+        id: `bld_${x}_${y}`,
+        height,
+        base: 0,
+        color: bType.color,
+        type: bType.name,
+        coordinates: coords,
+      });
+    }
+  }
+
+  return buildings;
+}
+
 const workspaceData = CITY_DATA.workspace || { candidateSites: [], competitors: [], h3Cells: [] };
 const CANDIDATE_SITES = workspaceData.candidateSites || [];
 const COMPETITOR_POINTS = workspaceData.competitors || [];
