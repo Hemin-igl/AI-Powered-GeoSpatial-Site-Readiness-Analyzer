@@ -799,8 +799,8 @@ export const MapView: React.FC<MapViewProps> = ({
     }
 
     if (map.getLayer('competitors-point')) {
-      map.setLayoutProperty('competitors-point', 'visibility', compActive ? 'visible' : 'none');
-      map.setLayoutProperty('competitors-halo', 'visibility', compActive ? 'visible' : 'none');
+      map.setLayoutProperty('competitors-point', 'visibility', 'none');
+      map.setLayoutProperty('competitors-halo', 'visibility', 'none');
     }
   }, [selectedSite, sites, showIsochrones, isochroneMode, layers, activeH3Cells, activeCompetitors, onSelectHexCell]);
 
@@ -889,7 +889,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
     activeCompetitors.forEach((comp) => {
       const el = document.createElement('div');
-      el.className = 'competitor-badge-marker group cursor-pointer relative';
+      el.className = 'competitor-dot-marker group cursor-pointer relative';
       el.style.transform = 'translate(-50%, -50%)';
 
       // Category icon & accent color
@@ -900,17 +900,25 @@ export const MapView: React.FC<MapViewProps> = ({
 
       const iconEmoji = isEV ? '⚡' : isWarehouse ? '📦' : isTelecom ? '🗼' : isSolar ? '☀️' : '🛒';
       const themeColor = isEV ? '#38bdf8' : isWarehouse ? '#f59e0b' : isTelecom ? '#a855f7' : isSolar ? '#eab308' : '#f43f5e';
-      const borderColor = isEV ? 'border-sky-500/80' : isWarehouse ? 'border-amber-500/80' : isTelecom ? 'border-purple-500/80' : isSolar ? 'border-yellow-500/80' : 'border-rose-500/80';
-      const bgBadge = isEV ? 'bg-sky-950/90 text-sky-200' : isWarehouse ? 'bg-amber-950/90 text-amber-200' : isTelecom ? 'bg-purple-950/90 text-purple-200' : isSolar ? 'bg-yellow-950/90 text-yellow-200' : 'bg-rose-950/90 text-rose-200';
 
       el.innerHTML = `
-        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#0b0f19]/95 border ${borderColor} hover:scale-110 shadow-2xl backdrop-blur-md transition-all duration-200 hover:z-40">
-          <span class="text-xs">${iconEmoji}</span>
-          <div class="flex flex-col">
-            <span class="text-[11px] font-bold text-white truncate max-w-[120px] leading-tight">${comp.name.split(' ')[0]} ${comp.name.split(' ')[1] || ''}</span>
-            <span class="text-[9px] text-slate-400 font-medium truncate max-w-[120px]">${comp.commercialType || comp.brand}</span>
+        <div class="relative flex items-center justify-center">
+          <!-- Subtle Red Glow Pulse -->
+          <div class="absolute -inset-1 rounded-full bg-rose-500/40 animate-ping opacity-50 pointer-events-none"></div>
+
+          <!-- Red Dot with Centered Icon -->
+          <div class="relative w-7 h-7 rounded-full bg-gradient-to-br from-red-500 via-rose-600 to-rose-700 border-2 border-white shadow-xl shadow-red-950/70 flex items-center justify-center text-xs transition-all duration-200 group-hover:scale-125 group-hover:ring-4 group-hover:ring-rose-500/50 group-hover:z-50">
+            <span class="select-none leading-none drop-shadow-sm">${iconEmoji}</span>
           </div>
-          <span class="text-[9px] font-mono px-1.5 py-0.5 rounded-md ${bgBadge} border border-white/10 font-bold ml-0.5">${comp.distanceKm || '1.2'}km</span>
+
+          <!-- Hover Tooltip Preview -->
+          <div class="absolute bottom-full mb-1.5 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
+            <div class="px-2 py-0.5 rounded-lg bg-[#090d1f]/95 text-white text-[10px] font-bold whitespace-nowrap shadow-xl border border-rose-500/40 flex items-center gap-1.5">
+              <span>${comp.name}</span>
+              <span class="text-rose-300 font-mono text-[9px] px-1 py-0.2 rounded bg-rose-950/80">${comp.distanceKm || '1.2'}km</span>
+            </div>
+            <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-[#090d1f] -mt-0.5"></div>
+          </div>
         </div>
       `;
 
@@ -928,7 +936,7 @@ export const MapView: React.FC<MapViewProps> = ({
         popupRef.current
           .setLngLat([comp.lng, comp.lat])
           .setHTML(`
-            <div style="background:#090d1f; color:#f8fafc; padding:14px; border-radius:16px; border:1px solid ${themeColor}; font-family:sans-serif; font-size:12px; box-shadow:0 20px 40px rgba(0,0,0,0.8); min-width:240px; max-width:280px;">
+            <div style="background:#090d1f; color:#f8fafc; padding:14px; border-radius:16px; border:1px solid ${themeColor}; font-family:sans-serif; font-size:12px; box-shadow:0 20px 40px rgba(0,0,0,0.85); min-width:240px; max-width:280px;">
               <!-- Header Banner -->
               <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
                 <div style="display:flex; align-items:center; gap:6px;">
