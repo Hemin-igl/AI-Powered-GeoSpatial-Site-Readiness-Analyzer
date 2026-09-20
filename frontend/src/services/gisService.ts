@@ -1,3 +1,18 @@
+import {
+  CITY_DATA,
+  DEFAULT_MAP_LAYERS,
+  ISOCHRONE_DATA,
+  PRESET_WEIGHTS,
+} from '../data/mockData';
+import {
+  BusinessType,
+  CandidateSite,
+  CompetitorPoint,
+  H3CellData,
+  MapLayerConfig,
+  ScoringWeights,
+} from '../types';
+
 // Real-world competitor brand datasets by business archetype
 export const REAL_WORLD_COMPETITORS_BY_TYPE: Record<BusinessType, { name: string; brand: string; category: string; rating: number; radiusOffsetKm: number; angleDeg: number }[]> = {
   'Retail Store': [
