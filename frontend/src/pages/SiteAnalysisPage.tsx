@@ -41,7 +41,7 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
   isInCompare,
   onNavigateTab,
 }) => {
-  const cityName = activeCity ? activeCity.name : 'Surat';
+  const cityName = activeCity ? activeCity.name : 'Target Analysis Region';
 
   // Input fields
   const [latInput, setLatInput] = useState(currentSite.lat.toString());

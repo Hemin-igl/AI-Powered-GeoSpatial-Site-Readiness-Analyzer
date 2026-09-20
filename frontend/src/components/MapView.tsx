@@ -26,7 +26,8 @@ import {
 import { LayerControl } from './LayerControl';
 import { City } from '../types';
 
-const { riverCoordinates: TAPI_RIVER_COORDINATES, roads: SURAT_ROADS } = CITY_DATA.surat;
+const TAPI_RIVER_COORDINATES: [number, number][] = [];
+const SURAT_ROADS: any[] = [];
 
 interface MapViewProps {
   activeCity?: City;

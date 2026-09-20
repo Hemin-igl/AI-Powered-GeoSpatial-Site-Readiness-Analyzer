@@ -40,8 +40,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenAiModal,
   activeCity,
 }) => {
-  const cityName = activeCity ? activeCity.name : 'Surat';
-  const cityRegion = activeCity ? activeCity.state : 'Gujarat';
+  const cityName = activeCity ? activeCity.name : 'Your Target Region';
+  const cityRegion = activeCity ? activeCity.state : 'Metropolitan Area';
 
   // Contact Form State
   const [contactForm, setContactForm] = useState({
@@ -75,9 +75,9 @@ export const HomePage: React.FC<HomePageProps> = ({
     },
     {
       step: '02',
-      title: `Explore & Pin Locations in ${cityName}`,
-      shortDesc: 'Scan 45+ candidate zones or add custom coordinates',
-      desc: `Browse prime localities across ${cityName} or pin any custom coordinate directly on the interactive map.`,
+      title: `Explore & Pin Target Locations`,
+      shortDesc: 'Scan candidate zones or add custom coordinates',
+      desc: `Browse prime localities across ${cityName} or input any custom coordinates to evaluate readiness.`,
       actionLabel: 'Open Opportunity Map',
       tabTarget: 'opportunity-map',
       icon: MapPin,
@@ -87,7 +87,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       step: '03',
       title: 'Fine-Tune Multi-Criteria Weights',
       shortDesc: 'Balance population, competition, and risk',
-      desc: 'Use dynamic sliders to adjust the relative importance of Population Density, Road Accessibility, Competitor Distance Decay, Land Zoning, and Tapi River Flood Hazard.',
+      desc: 'Use dynamic sliders to adjust the relative importance of Population Density, Road Accessibility, Competitor Distance Decay, Land Zoning, and Environmental Hazard.',
       actionLabel: 'Adjust Weights & Layers',
       tabTarget: 'data-layers',
       icon: Sliders,

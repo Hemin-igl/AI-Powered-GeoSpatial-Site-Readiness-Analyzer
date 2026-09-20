@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { CandidateSite, City } from '../types';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
   activeCity: City;
@@ -26,6 +27,8 @@ interface NavbarProps {
   onSelectSite?: (site: CandidateSite) => void;
   onSearchSelect?: (siteId: string) => void;
   onNavigateTab?: (tab: string) => void;
+  onOpenAuthModal?: () => void;
+  onOpenIntroPage?: () => void;
   candidateSites?: CandidateSite[];
 }
 
@@ -36,13 +39,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectSite,
   onSearchSelect,
   onNavigateTab,
+  onOpenAuthModal,
+  onOpenIntroPage,
   candidateSites = [],
 }) => {
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Format tab label nicely
   const tabTitles: Record<string, { title: string; subtitle: string }> = {
@@ -75,8 +82,17 @@ export const Navbar: React.FC<NavbarProps> = ({
         .slice(0, 5)
     : [];
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
-    <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100/90 dark:border-slate-800/90 px-6 py-3.5 flex items-center justify-between gap-4 transition-colors">
+    <header className="h-18 px-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 transition-colors z-20">
       {/* Breadcrumbs & Title */}
       <div className="flex flex-col min-w-0">
         <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
@@ -90,7 +106,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span>/</span>
           <span className="text-slate-600 dark:text-slate-300 font-medium">{currentTabInfo.subtitle}</span>
           <span>/</span>
-          <span className="text-indigo-600 dark:text-indigo-400 font-semibold truncate">{activeCity.name} Metro</span>
+          <span className="text-indigo-600 dark:text-indigo-400 font-semibold truncate">{activeCity?.name || 'Active Workspace'}</span>
         </div>
         <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight truncate mt-0.5">
           {currentTabInfo.title}
@@ -174,6 +190,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
+        {/* Intro Page Button */}
+        {onOpenIntroPage && (
+          <button
+            onClick={onOpenIntroPage}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-black text-slate-200 hover:text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer border border-slate-800"
+            title="View Black Intro Page"
+          >
+            <Compass className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Intro Page</span>
+          </button>
+        )}
+
         {/* Notifications Button */}
         <div className="relative">
           <button
@@ -188,36 +216,24 @@ export const Navbar: React.FC<NavbarProps> = ({
           {showNotifications && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <span className="text-xs font-bold text-slate-900">Spatial Intelligence Alerts</span>
-                  <span className="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-full">
-                    3 New
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Spatial Intelligence Alerts</span>
+                  <span className="text-[10px] text-indigo-600 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full">
+                    2 New
                   </span>
                 </div>
                 <div className="space-y-3 pt-3">
                   <div className="flex gap-2.5 items-start">
-                    <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs font-semibold text-slate-800">New High-Readiness Zone</span>
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Scoring Engine v1.0 Live</span>
                       <span className="text-[11px] text-slate-500 leading-snug">
-                        Vesu VIP Cross Road exceeded 82/100 threshold after census update.
+                        Ready to process multi-criteria site coordinates globally.
                       </span>
-                      <span className="text-[10px] text-slate-400 mt-1">2 mins ago</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2.5 items-start">
-                    <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-semibold text-slate-800">Competitor Detected</span>
-                      <span className="text-[11px] text-slate-500 leading-snug">
-                        Jio-bp pulse station registered within 2.1km of Dumas Tech Corridor.
-                      </span>
-                      <span className="text-[10px] text-slate-400 mt-1">18 mins ago</span>
+                      <span className="text-[10px] text-slate-400 mt-1">Just now</span>
                     </div>
                   </div>
                 </div>
@@ -268,46 +284,66 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        {/* Quick Home / Workspace Toggle */}
-        {activeTab !== 'home' ? (
-          <button
-            onClick={() => onNavigateTab?.('home')}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
-            title="Return to Home & Operating Guide"
-          >
-            <Home className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-            <span>Home & Guide</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => onNavigateTab?.('overview')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
-          >
-            <span>Open Workspace</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        )}
-
         {/* Primary Action Button: + New Site Analysis */}
         <button
           onClick={onOpenNewSiteModal}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-semibold shadow-xs transition-all hover:scale-[1.01]"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">New Site Analysis</span>
+          <span className="hidden md:inline">Analyze Site</span>
           <span className="md:hidden">New</span>
         </button>
 
-        {/* User Profile Avatar */}
-        <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200/70 dark:border-slate-800">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-semibold flex items-center justify-center text-xs shadow-xs">
-            RP
+        {/* User Profile Avatar / Sign In */}
+        {isAuthenticated && user ? (
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2.5 pl-2 border-l border-slate-200/70 dark:border-slate-800 cursor-pointer group"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-bold flex items-center justify-center text-xs shadow-xs group-hover:scale-105 transition-transform">
+                {getInitials(user.full_name || 'Rahul Patel')}
+              </div>
+              <div className="hidden xl:flex flex-col text-left">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-tight">
+                  {user.full_name}
+                </span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">{user.role}</span>
+              </div>
+            </button>
+
+            {showUserMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-3 z-50 animate-in fade-in">
+                  <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-2">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{user.full_name}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+                    <span className="inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300">
+                      {user.organization}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          <div className="hidden xl:flex flex-col">
-            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-tight">Rahul Patel</span>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">Analyst</span>
-          </div>
-        </div>
+        ) : (
+          <button
+            onClick={onOpenAuthModal}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition-colors cursor-pointer"
+          >
+            Sign In
+          </button>
+        )}
       </div>
     </header>
   );

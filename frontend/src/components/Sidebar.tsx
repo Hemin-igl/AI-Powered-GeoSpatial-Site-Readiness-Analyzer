@@ -171,7 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Building2 className="w-3.5 h-3.5" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{activeCity.name} Municipal Area</span>
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{activeCity?.name || 'GeoSpatial Workspace'}</span>
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 Spatial Model Live

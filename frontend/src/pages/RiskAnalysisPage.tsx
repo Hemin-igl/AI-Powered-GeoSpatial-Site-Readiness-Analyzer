@@ -34,12 +34,12 @@ export const RiskAnalysisPage: React.FC<RiskAnalysisPageProps> = ({
   const riskFactors = [
     {
       id: 'flood',
-      title: 'Tapi River Flood Plains & Tidal Surge',
+      title: 'Hydrological Flood Plains & Inundation Risk',
       severity: 'Medium',
       description:
-        '100-year and 25-year flood inundation buffer zones around Tapi River embankments and Ukai Dam discharge corridors.',
+        '100-year and 25-year flood inundation buffer zones around regional drainage basins and watercourse discharge corridors.',
       statusColor: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800/60',
-      affectedSites: 4,
+      affectedSites: 0,
       mitigation: 'Elevated plinth requirement (>4.5m MSL) and backflow prevention valves.',
     },
     {
@@ -141,7 +141,7 @@ export const RiskAnalysisPage: React.FC<RiskAnalysisPageProps> = ({
         </div>
 
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs">
-          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">Tapi Buffer Distance</span>
+          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">Hydrological Buffer</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">1.8 km</span>
             <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center">
@@ -160,12 +160,12 @@ export const RiskAnalysisPage: React.FC<RiskAnalysisPageProps> = ({
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Spatial Risk Inundation & Buffer Map</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Visualizing Tapi river trajectory, low-elevation catchment areas, and site risk flags.
+                Visualizing regional drainage trajectory, low-elevation catchment areas, and site risk flags.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
-                <Waves className="w-3 h-3" /> Tapi River Hydrology
+                <Waves className="w-3 h-3" /> Watercourse Hydrology
               </span>
             </div>
           </div>
