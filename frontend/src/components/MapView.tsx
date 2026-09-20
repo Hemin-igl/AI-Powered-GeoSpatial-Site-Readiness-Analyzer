@@ -437,7 +437,8 @@ export const MapView: React.FC<MapViewProps> = ({
       }
     }
 
-    if (!map.getSource('openfreemap')) {
+    const vectorSourceId = map.getSource('openmaptiles') ? 'openmaptiles' : 'openfreemap';
+    if (!map.getSource('openmaptiles') && !map.getSource('openfreemap')) {
       map.addSource('openfreemap', {
         url: 'https://tiles.openfreemap.org/planet',
         type: 'vector',
@@ -448,10 +449,10 @@ export const MapView: React.FC<MapViewProps> = ({
       map.addLayer(
         {
           id: '3d-buildings',
-          source: 'openfreemap',
+          source: vectorSourceId,
           'source-layer': 'building',
           type: 'fill-extrusion',
-          minzoom: 15,
+          minzoom: 14,
           filter: ['!=', ['get', 'hide_3d'], true],
           paint: {
             'fill-extrusion-color': [
@@ -469,14 +470,14 @@ export const MapView: React.FC<MapViewProps> = ({
               'interpolate',
               ['linear'],
               ['zoom'],
-              15,
+              14,
               0,
               16,
               ['get', 'render_height']
             ],
             'fill-extrusion-base': [
               'case',
-              ['>=', ['get', 'zoom'], 16],
+              ['>=', ['get', 'zoom'], 15],
               ['get', 'render_min_height'],
               0
             ],
