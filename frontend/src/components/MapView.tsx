@@ -38,6 +38,8 @@ import { LayerControl } from './LayerControl';
 import { ISOCHRONE_DATA } from '../data/mockData';
 import { generateRealWorldCompetitors, generateH3GridAround, analyzeSite } from '../services/gisService';
 
+const MAP_API_KEY = import.meta.env.VITE_MAP_API_KEY || 'cb1_3r5w_1_870f82872ede2321c67a7ba6';
+
 // MapLibre Basemap Style Presets
 const MAP_STYLES = {
   dark: {
