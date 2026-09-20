@@ -135,6 +135,8 @@ export default function App() {
     setActiveTab('site-analysis');
   };
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   // 1. INTRO PAGE VIEW (Black Background on Website Load)
   if (showIntroPage) {
     return (
@@ -162,8 +164,12 @@ export default function App() {
       {/* 1. PERSISTENT SIDEBAR NAVIGATION */}
       <Sidebar
         activeCity={activeCity}
+        availableCities={CITIES}
+        onCityChange={handleCityChange}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        collapsed={isSidebarCollapsed}
+        setCollapsed={setIsSidebarCollapsed}
         openAiModal={() => setIsAiModalOpen(true)}
       />
 

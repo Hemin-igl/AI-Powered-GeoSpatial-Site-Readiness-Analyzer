@@ -2,13 +2,45 @@ import { CandidateSite, CompetitorPoint, H3CellData, MapLayerConfig, Opportunity
 
 export const CITIES: City[] = [
   {
-    id: 'workspace',
-    name: 'Target Analysis Area',
-    state: 'Active Workspace',
-    country: 'Global',
+    id: 'surat',
+    name: 'Surat Metropolitan Area',
+    state: 'Gujarat',
+    country: 'India',
     lat: 21.1702,
     lng: 72.8311,
-  }
+  },
+  {
+    id: 'ahmedabad',
+    name: 'Ahmedabad Megacity Hub',
+    state: 'Gujarat',
+    country: 'India',
+    lat: 23.0225,
+    lng: 72.5714,
+  },
+  {
+    id: 'vadodara',
+    name: 'Vadodara Growth Corridor',
+    state: 'Gujarat',
+    country: 'India',
+    lat: 22.3072,
+    lng: 73.1812,
+  },
+  {
+    id: 'riyadh',
+    name: 'Riyadh Central Gateway',
+    state: 'Riyadh Province',
+    country: 'Saudi Arabia',
+    lat: 24.7136,
+    lng: 46.6753,
+  },
+  {
+    id: 'dubai',
+    name: 'Dubai Business Bay & Marina',
+    state: 'Dubai',
+    country: 'UAE',
+    lat: 25.2048,
+    lng: 55.2708,
+  },
 ];
 
 export const PRESET_WEIGHTS: Record<string, ScoringWeights> = {
@@ -292,5 +324,9 @@ const generateCityData = (city: City): CityData => {
 };
 
 export const CITY_DATA: Record<string, CityData> = {
-  workspace: generateCityData(CITIES[0]),
+  surat: generateCityData(CITIES[0]),
+  ahmedabad: generateCityData(CITIES[1]),
+  vadodara: generateCityData(CITIES[2]),
+  riyadh: generateCityData(CITIES[3]),
+  dubai: generateCityData(CITIES[4]),
 };
