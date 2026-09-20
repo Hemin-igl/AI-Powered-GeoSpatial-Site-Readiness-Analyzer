@@ -1,17 +1,131 @@
-import {
-  CITY_DATA,
-  DEFAULT_MAP_LAYERS,
-  ISOCHRONE_DATA,
-  PRESET_WEIGHTS,
-} from '../data/mockData';
-import {
-  BusinessType,
-  CandidateSite,
-  CompetitorPoint,
-  H3CellData,
-  MapLayerConfig,
-  ScoringWeights,
-} from '../types';
+// Real-world competitor brand datasets by business archetype
+export const REAL_WORLD_COMPETITORS_BY_TYPE: Record<BusinessType, { name: string; brand: string; category: string; rating: number; radiusOffsetKm: number; angleDeg: number }[]> = {
+  'Retail Store': [
+    { name: 'Reliance Smart Bazaar', brand: 'Reliance Retail', category: 'Hypermarket & Grocery', rating: 4.4, radiusOffsetKm: 0.8, angleDeg: 35 },
+    { name: 'D-Mart Supercenter', brand: 'Avenue Supermarts', category: 'Discount Retail & Supermarket', rating: 4.7, radiusOffsetKm: 1.4, angleDeg: 120 },
+    { name: 'Starbucks Coffee & Drive-Thru', brand: 'Tata Starbucks', category: 'Specialty Cafe & QSR', rating: 4.5, radiusOffsetKm: 0.6, angleDeg: 210 },
+    { name: 'Croma Mega Electronics', brand: 'Tata Digital', category: 'Consumer Electronics & Appliances', rating: 4.3, radiusOffsetKm: 1.9, angleDeg: 295 },
+    { name: 'Zudio Fast Fashion', brand: 'Trent Ltd', category: 'Apparel & Department Store', rating: 4.2, radiusOffsetKm: 1.1, angleDeg: 75 },
+    { name: 'Decathlon Sports Hub', brand: 'Decathlon', category: 'Sporting Goods Mega-Store', rating: 4.8, radiusOffsetKm: 2.8, angleDeg: 165 },
+    { name: 'Westside Flagship', brand: 'Trent Ltd', category: 'Fashion & Lifestyle Retail', rating: 4.4, radiusOffsetKm: 2.1, angleDeg: 340 },
+    { name: 'McDonald’s Drive-Thru', brand: 'McDonald’s', category: 'Quick Service Restaurant', rating: 4.2, radiusOffsetKm: 0.5, angleDeg: 15 },
+    { name: 'Apple Premium Reseller (Unicorn)', brand: 'Apple Authorized', category: 'Premium Technology Retail', rating: 4.9, radiusOffsetKm: 1.5, angleDeg: 190 },
+    { name: 'Shoppers Stop Lifestyle Mall', brand: 'Shoppers Stop', category: 'Department Store & Cosmetics', rating: 4.3, radiusOffsetKm: 3.2, angleDeg: 260 },
+  ],
+  'EV Charging Station': [
+    { name: 'Tata Power EZ Charge 60kW DC Fast Hub', brand: 'Tata Power', category: 'Dual-Gun CCS2 Fast Hub', rating: 4.5, radiusOffsetKm: 0.7, angleDeg: 45 },
+    { name: 'Jio-bp pulse 120kW Super-Charger', brand: 'Jio-bp', category: 'Ultra-Fast Highway Hub', rating: 4.7, radiusOffsetKm: 1.3, angleDeg: 140 },
+    { name: 'Ather Grid Fast Charging Point', brand: 'Ather Energy', category: '2-Wheeler Rapid Point', rating: 4.6, radiusOffsetKm: 0.9, angleDeg: 225 },
+    { name: 'Statiq Ultra Commercial Station', brand: 'Statiq', category: 'Public Multi-Vehicle Hub', rating: 4.2, radiusOffsetKm: 2.2, angleDeg: 315 },
+    { name: 'ChargePoint 50kW Dual Charger', brand: 'ChargePoint', category: 'Fleet & Public Fast Hub', rating: 4.4, radiusOffsetKm: 1.8, angleDeg: 85 },
+    { name: 'Zeon Charging 150kW Hyper-Port', brand: 'Zeon', category: 'Commercial Ultra-Fast', rating: 4.6, radiusOffsetKm: 3.1, angleDeg: 180 },
+  ],
+  'Warehouse': [
+    { name: 'Amazon Sortation & Fulfillment Centre', brand: 'Amazon Logistics', category: 'E-commerce Mega Fulfillment', rating: 4.8, radiusOffsetKm: 2.4, angleDeg: 60 },
+    { name: 'Flipkart Large Goods Hub', brand: 'Flipkart Logistics', category: 'Regional Sorting Facility', rating: 4.5, radiusOffsetKm: 3.1, angleDeg: 150 },
+    { name: 'DHL Global Express Air Freight Terminal', brand: 'DHL Express', category: 'Cross-Border Logistics Gateway', rating: 4.6, radiusOffsetKm: 1.9, angleDeg: 240 },
+    { name: 'Blue Dart Aviation Cargo Hub', brand: 'Blue Dart', category: 'Express Parcel Distribution', rating: 4.3, radiusOffsetKm: 2.7, angleDeg: 320 },
+    { name: 'Delhivery Mega Gateway & Truck Terminal', brand: 'Delhivery', category: 'Automated Hub & Spoke Facility', rating: 4.2, radiusOffsetKm: 3.9, angleDeg: 105 },
+  ],
+  'Telecom Tower': [
+    { name: 'Indus Towers 5G High-Density Active Node', brand: 'Indus Towers', category: 'Shared Infrastructure Monopole', rating: 4.6, radiusOffsetKm: 0.4, angleDeg: 30 },
+    { name: 'Bharti Airtel 5G Ultra-Wideband Tower', brand: 'Airtel', category: 'Fiberized Macrocell Tower', rating: 4.7, radiusOffsetKm: 1.2, angleDeg: 135 },
+    { name: 'Reliance Jio True5G Giga-Node Lattice', brand: 'Jio Platforms', category: 'C-Band 5G High-Capacity', rating: 4.8, radiusOffsetKm: 0.8, angleDeg: 220 },
+    { name: 'American Tower Corp (ATC) Multi-Tenant Site', brand: 'ATC India', category: 'Co-Location Lattice Tower', rating: 4.3, radiusOffsetKm: 2.1, angleDeg: 305 },
+  ],
+  'Renewable Energy': [
+    { name: 'Tata Power Solar Microgrid Plant', brand: 'Tata Power Solar', category: 'Ground-Mounted Photovoltaic Array', rating: 4.7, radiusOffsetKm: 3.2, angleDeg: 55 },
+    { name: 'Adani Green Energy Substation & Feed', brand: 'Adani Green', category: 'High-Voltage Grid Interconnection', rating: 4.5, radiusOffsetKm: 4.1, angleDeg: 160 },
+    { name: 'Sterling & Wilson Commercial Solar Farm', brand: 'Sterling & Wilson', category: 'Commercial Rooftop & Solar Field', rating: 4.6, radiusOffsetKm: 2.6, angleDeg: 280 },
+  ],
+};
+
+/**
+ * Generates realistic real-world competitors around target coordinates
+ */
+export function generateRealWorldCompetitors(
+  centerLat: number,
+  centerLng: number,
+  businessType: BusinessType = 'Retail Store'
+): CompetitorPoint[] {
+  const templates = REAL_WORLD_COMPETITORS_BY_TYPE[businessType] || REAL_WORLD_COMPETITORS_BY_TYPE['Retail Store'];
+
+  return templates.map((tmpl, idx) => {
+    const rad = (tmpl.angleDeg * Math.PI) / 180;
+    const latOffset = (tmpl.radiusOffsetKm * Math.cos(rad)) / 111.32;
+    const lngOffset = (tmpl.radiusOffsetKm * Math.sin(rad)) / (111.32 * Math.cos((centerLat * Math.PI) / 180));
+
+    return {
+      id: `comp_${businessType.toLowerCase().slice(0, 3)}_${idx + 1}`,
+      name: tmpl.name,
+      brand: tmpl.brand,
+      category: tmpl.category,
+      lat: Number((centerLat + latOffset).toFixed(5)),
+      lng: Number((centerLng + lngOffset).toFixed(5)),
+      distanceKm: Number(tmpl.radiusOffsetKm.toFixed(1)),
+      rating: tmpl.rating,
+    };
+  });
+}
+
+/**
+ * Generates H3 Hexagonal Opportunity Grid around target coordinates
+ */
+export function generateH3GridAround(centerLat: number, centerLng: number): H3CellData[] {
+  const cells: H3CellData[] = [];
+  const rings = [
+    { radiusKm: 0.0, count: 1, prefix: 'core' },
+    { radiusKm: 0.75, count: 6, prefix: 'ring1' },
+    { radiusKm: 1.5, count: 12, prefix: 'ring2' },
+  ];
+
+  let idCounter = 1;
+
+  rings.forEach((ring) => {
+    if (ring.radiusKm === 0) {
+      cells.push({
+        id: `h3_cell_${idCounter++}`,
+        h3Index: `8860165a${Math.floor(1000 + Math.random() * 9000)}ffff`,
+        lat: centerLat,
+        lng: centerLng,
+        readinessScore: 91,
+        population: 34200,
+        competitors: 2,
+        accessibility: 94,
+        opportunityLevel: 'High',
+        hotspotType: 'hot',
+        clusterId: 1,
+      });
+      return;
+    }
+
+    const stepAngle = (2 * Math.PI) / ring.count;
+    for (let i = 0; i < ring.count; i++) {
+      const angle = i * stepAngle;
+      const latOffset = (ring.radiusKm * Math.cos(angle)) / 111.32;
+      const lngOffset = (ring.radiusKm * Math.sin(angle)) / (111.32 * Math.cos((centerLat * Math.PI) / 180));
+
+      const variance = (Math.sin(angle * 2) + Math.cos(angle * 3) + 2) / 4;
+      const score = Math.min(96, Math.max(52, Math.round(60 + variance * 34)));
+
+      cells.push({
+        id: `h3_cell_${idCounter++}`,
+        h3Index: `8860165a${Math.floor(1000 + (i + 1) * 731)}ffff`,
+        lat: Number((centerLat + latOffset).toFixed(5)),
+        lng: Number((centerLng + lngOffset).toFixed(5)),
+        readinessScore: score,
+        population: Math.round(12000 + variance * 28000),
+        competitors: Math.round(1 + variance * 5),
+        accessibility: Math.round(55 + variance * 40),
+        opportunityLevel: score >= 80 ? 'High' : score >= 65 ? 'Medium' : 'Low',
+        hotspotType: score >= 80 ? 'hot' : score < 65 ? 'cold' : 'neutral',
+        clusterId: score >= 80 ? 1 : score >= 65 ? 2 : 3,
+      });
+    }
+  });
+
+  return cells;
+}
 
 const workspaceData = CITY_DATA.workspace || { candidateSites: [], competitors: [], h3Cells: [] };
 const CANDIDATE_SITES = workspaceData.candidateSites || [];
