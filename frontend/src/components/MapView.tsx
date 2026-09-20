@@ -46,7 +46,7 @@ import {
 
 const MAP_API_KEY = import.meta.env.VITE_MAP_API_KEY || 'cb1_3r5w_1_870f82872ede2321c67a7ba6';
 
-// MapLibre Basemap Style Presets (capped at maxzoom 18 to enable smooth overscaling without data unavailable warnings)
+// MapLibre Basemap Style Presets (Powered by high-res CARTO, OpenStreetMap, and ESRI Satellite with overscaling protection)
 const MAP_STYLES = {
   dark: {
     name: 'Dark Matter GIS',
@@ -54,37 +54,24 @@ const MAP_STYLES = {
     style: {
       version: 8,
       sources: {
-        'esri-dark-base': {
+        'carto-dark': {
           type: 'raster',
           tiles: [
-            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+            'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+            'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+            'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
           ],
           tileSize: 256,
-          maxzoom: 18,
-          attribution: '&copy; Esri, DeLorme, NAVTEQ',
-        },
-        'esri-dark-ref': {
-          type: 'raster',
-          tiles: [
-            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-          ],
-          tileSize: 256,
-          maxzoom: 18,
-          attribution: '&copy; Esri',
+          maxzoom: 20,
+          attribution: '&copy; CARTO &copy; OpenStreetMap contributors',
         },
       },
       layers: [
         {
-          id: 'esri-dark-base-layer',
+          id: 'carto-dark-layer',
           type: 'raster',
-          source: 'esri-dark-base',
-          minzoom: 0,
-          maxzoom: 22,
-        },
-        {
-          id: 'esri-dark-ref-layer',
-          type: 'raster',
-          source: 'esri-dark-ref',
+          source: 'carto-dark',
           minzoom: 0,
           maxzoom: 22,
         },
@@ -103,7 +90,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
-          maxzoom: 18,
+          maxzoom: 16,
           attribution: '&copy; Esri, Maxar, Earthstar Geographics',
         },
         'satellite-labels': {
@@ -112,7 +99,7 @@ const MAP_STYLES = {
             'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
           ],
           tileSize: 256,
-          maxzoom: 18,
+          maxzoom: 16,
           attribution: '&copy; Esri',
         },
       },
@@ -144,7 +131,7 @@ const MAP_STYLES = {
           type: 'raster',
           tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
           tileSize: 256,
-          maxzoom: 18,
+          maxzoom: 19,
           attribution: '&copy; OpenStreetMap contributors',
         },
       },
@@ -165,37 +152,24 @@ const MAP_STYLES = {
     style: {
       version: 8,
       sources: {
-        'esri-light-base': {
+        'carto-light': {
           type: 'raster',
           tiles: [
-            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+            'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+            'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+            'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+            'https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
           ],
           tileSize: 256,
-          maxzoom: 18,
-          attribution: '&copy; Esri, DeLorme, NAVTEQ',
-        },
-        'esri-light-ref': {
-          type: 'raster',
-          tiles: [
-            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-          ],
-          tileSize: 256,
-          maxzoom: 18,
-          attribution: '&copy; Esri',
+          maxzoom: 20,
+          attribution: '&copy; CARTO &copy; OpenStreetMap contributors',
         },
       },
       layers: [
         {
-          id: 'esri-light-base-layer',
+          id: 'carto-light-layer',
           type: 'raster',
-          source: 'esri-light-base',
-          minzoom: 0,
-          maxzoom: 22,
-        },
-        {
-          id: 'esri-light-ref-layer',
-          type: 'raster',
-          source: 'esri-light-ref',
+          source: 'carto-light',
           minzoom: 0,
           maxzoom: 22,
         },
@@ -353,15 +327,15 @@ export const MapView: React.FC<MapViewProps> = ({
   }, [h3Cells, selectedSite, sites, defaultCenter]);
 
   // 3D Isometric View Mode State
-  const [is3DMode, setIs3DMode] = useState(false);
+  const [is3DMode, setIs3DMode] = useState(true);
 
   const toggle3DMode = () => {
     const next = !is3DMode;
     setIs3DMode(next);
     if (mapRef.current) {
       mapRef.current.easeTo({
-        pitch: next ? 58 : 0,
-        bearing: next ? -24 : 0,
+        pitch: next ? 54 : 0,
+        bearing: next ? -18 : 0,
         duration: 1000,
       });
     }
@@ -375,9 +349,11 @@ export const MapView: React.FC<MapViewProps> = ({
       container: mapContainerRef.current,
       style: MAP_STYLES[currentStyle].style as any,
       center: defaultCenter,
-      zoom: 12.5,
-      maxZoom: 18.5,
-      maxPitch: 65,
+      zoom: 13.5,
+      pitch: 52,
+      bearing: -16,
+      maxZoom: 19.5,
+      maxPitch: 70,
       attributionControl: false,
     });
 
@@ -843,6 +819,7 @@ export const MapView: React.FC<MapViewProps> = ({
           'fill-extrusion-height': ['get', 'height'],
           'fill-extrusion-base': ['get', 'base'],
           'fill-extrusion-opacity': buildingsOpacity,
+          'fill-extrusion-vertical-gradient': true,
         },
       });
 
