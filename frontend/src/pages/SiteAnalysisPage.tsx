@@ -23,6 +23,7 @@ import {
 import { BusinessType, CandidateSite, ScoringWeights, City } from '../types';
 import { PRESET_WEIGHTS } from '../data/mockData';
 import { calculateReadinessScore, generateAiExplanation, analyzeSite } from '../services/gisService';
+import { MapCoordinatePickerModal } from '../components/MapCoordinatePickerModal';
 
 interface SiteAnalysisPageProps {
   currentSite: CandidateSite;
@@ -49,6 +50,28 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
   const [businessType, setBusinessType] = useState<BusinessType>(currentSite.businessType);
   const [radiusKm, setRadiusKm] = useState('5');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isGettingGps, setIsGettingGps] = useState(false);
+
+  const handleGetCurrentGps = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsGettingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsGettingGps(false);
+        setLatInput(pos.coords.latitude.toFixed(6));
+        setLngInput(pos.coords.longitude.toFixed(6));
+      },
+      (err) => {
+        setIsGettingGps(false);
+        alert('Could not get GPS coordinates: ' + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
 
   // Configurable weights (default 30%, 25%, 15%, 15%, 15%)
   const [weights, setWeights] = useState<ScoringWeights>({
@@ -144,15 +167,36 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* 1. TOP ANALYZE LOCATION FORM */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-            <MapPin className="w-4 h-4" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Analyze a Location</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Input geographic coordinates in {cityName} to compute multi-criteria spatial readiness across 5 configurable pillars
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Analyze a Location</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Input geographic coordinates in {cityName} to compute multi-criteria spatial readiness across 5 configurable pillars
-            </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleGetCurrentGps}
+              disabled={isGettingGps}
+              className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            >
+              <Navigation className={`w-3.5 h-3.5 ${isGettingGps ? 'animate-spin' : ''}`} />
+              <span>{isGettingGps ? 'Locating...' : 'Use My GPS'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsPickerOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-600/30 transition-all active:scale-95"
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              <span>Drop Pin on Map</span>
+            </button>
           </div>
         </div>
 
@@ -542,6 +586,19 @@ export const SiteAnalysisPage: React.FC<SiteAnalysisPageProps> = ({
           {aiExplanationText}
         </div>
       </div>
+
+      {/* Interactive Geo Drop Pin Modal */}
+      <MapCoordinatePickerModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        activeCity={activeCity}
+        initialLat={parseFloat(latInput) || activeCity?.lat}
+        initialLng={parseFloat(lngInput) || activeCity?.lng}
+        onSelectCoordinates={(pickedLat, pickedLng) => {
+          setLatInput(pickedLat.toString());
+          setLngInput(pickedLng.toString());
+        }}
+      />
     </div>
   );
 };

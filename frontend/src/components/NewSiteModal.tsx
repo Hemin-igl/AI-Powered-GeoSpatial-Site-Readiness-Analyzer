@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, MapPin, Sparkles, Building2, Compass, Loader2 } from 'lucide-react';
 import { BusinessType, City } from '../types';
+import { MapCoordinatePickerModal } from './MapCoordinatePickerModal';
 
 interface NewSiteModalProps {
   activeCity: City;
@@ -57,6 +58,29 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
     { label: 'Hazira Expressway', lat: '21.1750', lng: '72.6850' },
   ];
 
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isGettingGps, setIsGettingGps] = useState(false);
+
+  const handleGetCurrentGps = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsGettingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsGettingGps(false);
+        setLat(pos.coords.latitude.toFixed(6));
+        setLng(pos.coords.longitude.toFixed(6));
+      },
+      (err) => {
+        setIsGettingGps(false);
+        alert('Could not get GPS coordinates: ' + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
@@ -103,35 +127,63 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
             />
           </div>
 
-          {/* Coordinates Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Latitude (°N)
+          {/* Coordinates Grid with Geo Drop Pin & GPS */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Site Coordinates
               </label>
-              <input
-                type="number"
-                step="any"
-                value={lat}
-                onChange={(e) => setLat(e.target.value)}
-                placeholder="21.1702"
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 font-mono focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
-              />
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleGetCurrentGps}
+                  disabled={isGettingGps}
+                  className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-[11px] font-semibold flex items-center gap-1 transition-all"
+                  title="Use Browser GPS"
+                >
+                  <Compass className={`w-3 h-3 ${isGettingGps ? 'animate-spin' : ''}`} />
+                  <span>{isGettingGps ? 'Locating...' : 'My GPS'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPickerOpen(true)}
+                  className="px-2.5 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold flex items-center gap-1 shadow-xs shadow-indigo-600/30 transition-all active:scale-95"
+                >
+                  <MapPin className="w-3 h-3" />
+                  <span>Drop Pin on Map</span>
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Longitude (°E)
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={lng}
-                onChange={(e) => setLng(e.target.value)}
-                placeholder="72.8311"
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 font-mono focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
-              />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1">
+                  Latitude (°N)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
+                  placeholder="21.1702"
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 font-mono focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1">
+                  Longitude (°E)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={lng}
+                  onChange={(e) => setLng(e.target.value)}
+                  placeholder="72.8311"
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 font-mono focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-hidden transition-all"
+                />
+              </div>
             </div>
           </div>
 
@@ -205,6 +257,19 @@ export const NewSiteModal: React.FC<NewSiteModalProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Interactive Geo Drop Pin Modal */}
+      <MapCoordinatePickerModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        activeCity={activeCity}
+        initialLat={parseFloat(lat) || activeCity.lat}
+        initialLng={parseFloat(lng) || activeCity.lng}
+        onSelectCoordinates={(pickedLat, pickedLng) => {
+          setLat(pickedLat.toString());
+          setLng(pickedLng.toString());
+        }}
+      />
     </div>
   );
 };

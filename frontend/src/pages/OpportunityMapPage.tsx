@@ -235,6 +235,8 @@ export const OpportunityMapPage: React.FC<OpportunityMapPageProps> = ({
             ]}
             onToggleLayer={() => {}}
             onChangeOpacity={() => {}}
+            hideArchetypeBar={true}
+            compactHud={true}
             className="h-[520px]"
           />
         </div>
