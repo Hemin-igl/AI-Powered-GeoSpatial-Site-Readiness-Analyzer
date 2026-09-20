@@ -112,22 +112,41 @@ export const IntroPage: React.FC<IntroPageProps> = ({
 
   return (
     <div className="min-h-screen bg-[#000000] text-slate-100 font-sans relative overflow-x-hidden selection:bg-indigo-600 selection:text-white">
-      {/* Background Glowing Mesh Gradients */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-b from-indigo-900/30 via-purple-900/15 to-transparent blur-[140px] pointer-events-none rounded-full" />
-      <div className="absolute top-[800px] left-10 w-[500px] h-[500px] bg-cyan-900/15 blur-[150px] pointer-events-none rounded-full" />
-      <div className="absolute top-[1400px] right-10 w-[600px] h-[600px] bg-indigo-900/20 blur-[160px] pointer-events-none rounded-full" />
+      {/* Dynamic Background Atmospheric Glowing Mesh Gradients */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Top Center Spotlight */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[700px] bg-gradient-to-b from-indigo-600/20 via-purple-600/10 to-transparent blur-[160px] rounded-full" />
+        
+        {/* Left GIS Teal/Cyan Ambient Glow */}
+        <div className="absolute top-[35%] -left-32 w-[600px] h-[600px] bg-cyan-600/10 blur-[180px] rounded-full" />
+        
+        {/* Right Indigo/Violet Ambient Glow */}
+        <div className="absolute top-[65%] -right-32 w-[700px] h-[700px] bg-indigo-600/15 blur-[180px] rounded-full" />
+        
+        {/* Bottom Center Depth Glow */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-purple-900/15 blur-[160px] rounded-full" />
 
-      {/* Subtle Background Grid */}
-      <div
-        className="absolute inset-0 opacity-[0.07] pointer-events-none"
-        style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0)`,
-          backgroundSize: '36px 36px',
-        }}
-      />
+        {/* High-Precision GIS Coordinate Dot Matrix */}
+        <div
+          className="absolute inset-0 opacity-[0.12] pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1.5px 1.5px, rgba(147, 197, 253, 0.45) 1.5px, transparent 0)`,
+            backgroundSize: '40px 40px',
+          }}
+        />
+
+        {/* Subtle Cybernetic Scanline Grid Mask */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.2) 1px, transparent 1px)`,
+            backgroundSize: '80px 80px',
+          }}
+        />
+      </div>
 
       {/* Sticky Pitch Black Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-black/70 border-b border-white/[0.08] px-6 py-4 transition-all">
+      <header className="sticky top-0 z-40 backdrop-blur-2xl bg-black/80 border-b border-white/[0.08] px-6 py-3.5 transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3 select-none">
@@ -242,13 +261,13 @@ export const IntroPage: React.FC<IntroPageProps> = ({
         </div>
 
         {/* Quick Instant Spatial Score Preview Bar */}
-        <div className="max-w-2xl mx-auto p-4 rounded-3xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl shadow-2xl">
+        <div className="max-w-2xl mx-auto p-4 rounded-3xl bg-[#080d1a]/80 border border-indigo-500/20 backdrop-blur-2xl shadow-2xl shadow-indigo-950/50">
           <div className="flex items-center justify-between px-2 mb-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
               <MapPin className="w-3.5 h-3.5 text-indigo-400" />
               <span>Instant Coordinate Readiness Evaluator</span>
             </div>
-            <span className="text-[10px] text-slate-500">Live API Engine</span>
+            <span className="text-[10px] text-indigo-400/80 font-medium">Live API Engine</span>
           </div>
 
           <form onSubmit={handleQuickAnalyze} className="flex flex-col sm:flex-row items-center gap-3">
@@ -258,32 +277,32 @@ export const IntroPage: React.FC<IntroPageProps> = ({
                 value={quickLat}
                 onChange={(e) => setQuickLat(e.target.value)}
                 placeholder="Latitude (e.g. 21.1702)"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-black/80 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50"
               />
               <input
                 type="text"
                 value={quickLng}
                 onChange={(e) => setQuickLng(e.target.value)}
                 placeholder="Longitude (e.g. 72.8311)"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-black/80 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50"
               />
             </div>
 
             <button
               type="submit"
               disabled={isCalculating}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer whitespace-nowrap"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer whitespace-nowrap"
             >
               {isCalculating ? 'Computing...' : 'Calculate Score'}
             </button>
           </form>
 
           {quickScore !== null && (
-            <div className="mt-3 p-3 rounded-2xl bg-indigo-950/40 border border-indigo-800/50 flex items-center justify-between text-xs animate-in fade-in">
+            <div className="mt-3 p-3 rounded-2xl bg-indigo-950/60 border border-indigo-700/50 flex items-center justify-between text-xs animate-in fade-in">
               <span className="text-slate-300 font-medium">Computed Site Readiness Score:</span>
               <div className="flex items-center gap-2">
-                <span className="text-base font-black text-indigo-400">{quickScore}/100</span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 text-[10px] font-bold border border-emerald-800/60">
+                <span className="text-base font-black text-indigo-300">{quickScore}/100</span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 text-[10px] font-bold border border-emerald-700/60">
                   {quickScore >= 80 ? 'High Potential' : 'Moderate Viability'}
                 </span>
               </div>
@@ -294,12 +313,15 @@ export const IntroPage: React.FC<IntroPageProps> = ({
 
       {/* FLUID SCROLL-DRIVEN SEQUENCE ANIMATION */}
       <section className="relative z-20">
-        <ScrollSequence onEnterPlatform={onEnterPlatform} onOpenAuthModal={onOpenAuthModal} />
+        <ScrollSequence />
       </section>
 
       {/* Core Architectural Capabilities Grid */}
-      <section className="relative py-20 px-6 max-w-7xl mx-auto z-10">
+      <section className="relative py-24 px-6 max-w-7xl mx-auto z-10">
         <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-indigo-400 text-xs font-semibold mb-3">
+            <span>Spatial Algorithms</span>
+          </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-3">
             State-of-the-Art Geospatial Intelligence
           </h2>
@@ -314,14 +336,14 @@ export const IntroPage: React.FC<IntroPageProps> = ({
             return (
               <div
                 key={i}
-                className="group relative p-6 rounded-3xl bg-slate-950/80 border border-white/[0.08] hover:border-indigo-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 flex flex-col justify-between"
+                className="group relative p-7 rounded-3xl bg-[#060a16]/90 border border-white/[0.08] hover:border-indigo-500/40 hover:bg-[#091024]/90 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 flex flex-col justify-between backdrop-blur-xl"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-5">
                     <div className={`p-3 rounded-2xl bg-gradient-to-br border ${cap.color}`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/[0.04] text-slate-300 border border-white/[0.08]">
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/[0.05] text-slate-300 border border-white/[0.08]">
                       {cap.tag}
                     </span>
                   </div>
@@ -342,10 +364,10 @@ export const IntroPage: React.FC<IntroPageProps> = ({
       </section>
 
       {/* Workflow Steps */}
-      <section className="relative py-16 px-6 max-w-5xl mx-auto z-10 border-t border-white/[0.08]">
-        <div className="text-center mb-12">
+      <section className="relative py-20 px-6 max-w-5xl mx-auto z-10 border-t border-white/[0.08]">
+        <div className="text-center mb-14">
           <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">End-to-End Workflow</span>
-          <h2 className="text-2xl font-bold text-white mt-1">From Coordinates to Expansion Decision</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mt-1">From Coordinates to Expansion Decision</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -355,19 +377,20 @@ export const IntroPage: React.FC<IntroPageProps> = ({
             { step: '03', title: 'Execute GIS Engine', desc: 'Run distance decay, isochrones, and multi-criteria weights' },
             { step: '04', title: 'Export & Deploy', desc: 'Review AI explanations and export full readiness reports' },
           ].map((item, idx) => (
-            <div key={idx} className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] relative">
-              <span className="text-2xl font-black text-indigo-500/30 mb-2 block">{item.step}</span>
+            <div key={idx} className="p-6 rounded-2xl bg-[#060a16]/80 border border-white/[0.07] relative hover:border-indigo-500/30 transition-all backdrop-blur-lg">
+              <span className="text-2xl font-black text-indigo-500/40 mb-2 block">{item.step}</span>
               <h4 className="text-sm font-bold text-white mb-1">{item.title}</h4>
-              <p className="text-[11px] text-slate-400">{item.desc}</p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Bottom CTA Banner */}
-      <section className="relative py-16 px-6 max-w-5xl mx-auto z-10">
-        <div className="relative overflow-hidden p-8 md:p-12 rounded-3xl bg-gradient-to-r from-indigo-950/80 via-purple-950/60 to-slate-900/80 border border-indigo-800/40 text-center">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 blur-3xl pointer-events-none rounded-full" />
+      <section className="relative py-20 px-6 max-w-5xl mx-auto z-10">
+        <div className="relative overflow-hidden p-8 md:p-14 rounded-3xl bg-gradient-to-r from-indigo-950/90 via-[#0b0f24] to-purple-950/80 border border-indigo-700/40 text-center shadow-2xl shadow-indigo-950/60 backdrop-blur-2xl">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/20 blur-[100px] pointer-events-none rounded-full" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-500/15 blur-[100px] pointer-events-none rounded-full" />
           <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">Ready to Analyze Your Next Site?</h2>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto mb-8">
             Access live spatial layers, automated isochrones, competitive pressure indices, and grounded AI reasoning.
